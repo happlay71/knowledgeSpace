@@ -1,0 +1,33 @@
+server:
+  port: 9000
+  servlet:
+    context-path: /api
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/rent?useUnicode=true&characterEncoding=utf-8
+    username: root
+    password: 547118
+  mvc:
+    path match:
+      # 兼容swagger
+      matching-strategy: ant_path_matcher
+  profiles:
+    active: test
+  devtools:
+    restart:
+      enabled: true  #设置开启热部署
+      additional-paths: src/main/java #重启目录
+      exclude: WEB-INF/**
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      logic-delete-field: isDelete
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+
+
