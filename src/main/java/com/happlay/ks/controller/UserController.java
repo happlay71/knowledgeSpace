@@ -1,9 +1,13 @@
 package com.happlay.ks.controller;
 
 
+import com.happlay.ks.service.IUserService;
+import io.swagger.annotations.Api;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.annotation.Resource;
 
 /**
  * <p>
@@ -15,6 +19,21 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/user")
+@Api(value = "用户")
 public class UserController {
 
+    @Resource
+    IUserService iUserService;
+
+
+    // 增加用户
+
+
+    // 修改用户信息
+
+    // 删除用户
+
+    // 根据用户名查找用户
+
+    // 分页展示用户
 }
