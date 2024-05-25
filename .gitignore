@@ -27,7 +27,6 @@ target/
 /.nb-gradle/
 build/
 /src/main/resources/application.yaml
-/src/main/resources/application-test.yaml
 !**/src/main/**/build/
 !**/src/test/**/build/
 
