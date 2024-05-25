@@ -10,6 +10,7 @@ public enum ErrorCode {
     NOT_LOGIN_ERROR(40100, "未登录"),
     NOT_AUTH_ERROR(40101, "无权限"),
     TOKEN_ERROR(40102, "token错误"),
+    VERIFICATION_CODE_ERROR(40103, "验证码失效"),
     NOT_FOUND_ERROR(40400, "请求数据不存在"),
     FORBIDDEN_ERROR(40300, "禁止访问"),
     SYSTEM_ERROR(50000, "系统内部异常"),
