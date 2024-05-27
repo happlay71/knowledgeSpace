@@ -1,4 +1,4 @@
-package com.happlay.ks.model.vo;
+package com.happlay.ks.model.vo.user;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

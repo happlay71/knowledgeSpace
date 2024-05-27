@@ -2,12 +2,12 @@ package com.happlay.ks.service;
 
 import com.happlay.ks.model.dto.user.LoginUserRequest;
 import com.happlay.ks.model.dto.user.RegisterUserRequest;
+import com.happlay.ks.model.dto.user.AdminRegisterUserRequest;
 import com.happlay.ks.model.entity.User;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.happlay.ks.model.vo.LoginUserVo;
+import com.happlay.ks.model.vo.user.LoginUserVo;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Objects;
 
 /**
  * <p>
@@ -23,5 +23,7 @@ public interface IUserService extends IService<User> {
     LoginUserVo createLoginUserVo(User user);
     LoginUserVo login(LoginUserRequest request);
     LoginUserVo register(RegisterUserRequest request);
+    LoginUserVo setUserEmail(String email, User loginUser);
+    LoginUserVo adminRegisterUser(AdminRegisterUserRequest request, User loginUser);
 
 }

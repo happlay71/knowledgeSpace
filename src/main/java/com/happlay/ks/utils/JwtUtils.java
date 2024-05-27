@@ -5,7 +5,6 @@ import com.happlay.ks.constant.JwtConstant;
 import com.happlay.ks.exception.CommonException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SecureDigestAlgorithm;
@@ -14,7 +13,7 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
-public class JWTUtils {
+public class JwtUtils {
     public static String createToken(Integer userId) {
         SecureDigestAlgorithm<SecretKey, SecretKey> algorithm = Jwts.SIG.HS256;
         long expMillis = System.currentTimeMillis() + 1000L * JwtConstant.EXP;

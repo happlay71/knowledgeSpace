@@ -1,15 +1,16 @@
 package com.happlay.ks.controller;
 
 
+import com.happlay.ks.annotation.LoginCheck;
 import com.happlay.ks.common.BaseResponse;
 import com.happlay.ks.common.ResultUtils;
-import com.happlay.ks.exception.CommonException;
+import com.happlay.ks.constant.UserRoleConstant;
 import com.happlay.ks.model.dto.user.LoginUserRequest;
 import com.happlay.ks.model.dto.user.RegisterUserRequest;
+import com.happlay.ks.model.dto.user.AdminRegisterUserRequest;
 import com.happlay.ks.model.entity.User;
-import com.happlay.ks.model.vo.LoginUserVo;
+import com.happlay.ks.model.vo.user.LoginUserVo;
 import com.happlay.ks.service.IUserService;
-import com.happlay.ks.service.email.EmailService;
 import com.happlay.ks.service.email.VerificationService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -18,7 +19,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-import javax.xml.transform.Result;
 
 /**
  * <p>
@@ -56,28 +56,40 @@ public class UserController {
 
     @PostMapping("/sendVerificationEmail")
     @ApiOperation(value = "发送邮件", notes = "传入邮箱账号")
-    public BaseResponse<String> sendVerificationEmail(@RequestParam String email) {
+    public BaseResponse<String> sendVerificationEmail(@RequestParam String email, HttpServletRequest request) {
+        iUserService.getLoginUser(request);
         verificationService.sendVerificationEmail(email);
         return ResultUtils.success("验证码发送成功");
     }
 
     @PostMapping("/verifyCode")
     @ApiOperation(value = "验证邮箱信息", notes = "传入对应的邮箱和验证码")
-    public BaseResponse<String> verifyCode(@RequestParam String email, @RequestParam String code, HttpServletRequest request) {
+    public BaseResponse<LoginUserVo> verifyCode(@RequestParam String email, @RequestParam String code, HttpServletRequest request) {
         User loginUser = iUserService.getLoginUser(request);
         verificationService.verifyCode(email, code);
-        loginUser.setEmail(email);
-        iUserService.save(loginUser);
-        return ResultUtils.success("邮箱验证成功");
+        return ResultUtils.success(iUserService.setUserEmail(email, loginUser));
     }
-    // 增加用户
 
+    @PostMapping("/adminRegisterUser")
+    @LoginCheck(mustRole = {UserRoleConstant.ROOT, UserRoleConstant.USER_ADMIN})
+    @ApiOperation(value = "超级管理员或管理员添加用户", notes = "传入用户名，密码，确认密码，角色role")
+    public BaseResponse<LoginUserVo> addUserByAdmin(@Valid @RequestBody AdminRegisterUserRequest request, HttpServletRequest servletRequest) {
+        User loginUser = iUserService.getLoginUser(servletRequest);
+        return ResultUtils.success(iUserService.adminRegisterUser(request, loginUser));
+    }
 
-    // 修改用户信息
+    // 普通用户修改姓名密码
 
     // 删除用户
 
     // 根据用户名查找用户
+//    @GetMapping("/search")
+//    public BaseResponse<Page<UserVo>> searchUsers(
+//            @RequestParam(required = false) String username,
+//            @RequestParam(defaultValue = "1") int page,
+//            @RequestParam(defaultValue = "10") int size) {
+//        return userService.searchUsers(username, page, size);
+//    }
 
-    // 分页展示用户
+    // 分页查找用户
 }

@@ -19,13 +19,12 @@ public class VerificationService {
 
     @Resource
     private EmailService emailService;
-    @Resource
-    IUserService iUserService;
 
     public void sendVerificationEmail(String email) {
         String code = generateVerificationCode();
         emailCodeMap.put(email, code);
         emailCodeTimeMap.put(email, System.currentTimeMillis());
+        System.out.println("emailCodeTimeMap: " + emailCodeTimeMap);
 
         String subject = "邮箱验证";
         String text = "您的验证码是: " + code;
@@ -33,9 +32,21 @@ public class VerificationService {
     }
 
     public void verifyCode(String email, String code) {
-        if (!emailCodeMap.containsKey(email)) {
-            throw new CommonException(ErrorCode.PARAMS_ERROR, "邮箱未找到");
+        // 打印调试信息
+        System.out.println("emailCodeTimeMap: " + emailCodeTimeMap);
+        System.out.println("email: " + email);
+        if (email == null || code == null) {
+            throw new CommonException(ErrorCode.PARAMS_ERROR, "邮箱和验证码不能为空");
         }
+
+        if (!emailCodeMap.containsKey(email)) {
+            throw new CommonException(ErrorCode.PARAMS_ERROR, "未向该邮箱发送验证码");
+        }
+
+        if (!emailCodeTimeMap.containsKey(email)) {
+            throw new CommonException(ErrorCode.VERIFICATION_CODE_ERROR, "验证码发送时间未找到");
+        }
+
         long currentTime = System.currentTimeMillis();
         long sentTime = emailCodeTimeMap.get(email);
         if (currentTime - sentTime > TimeUnit.MINUTES.toMillis(5)) {
@@ -43,9 +54,16 @@ public class VerificationService {
             emailCodeTimeMap.remove(email);
             throw new CommonException(ErrorCode.VERIFICATION_CODE_ERROR, "验证码失效");
         }
+
         if (!emailCodeMap.get(email).equals(code)) {
             throw new CommonException(ErrorCode.VERIFICATION_CODE_ERROR, "验证码不正确");
         }
+        // 验证成功，执行相应操作
+        // TODO: 执行验证通过后的操作
+
+        // 验证成功后移除对应的记录
+        emailCodeMap.remove(email);
+        emailCodeTimeMap.remove(email);
     }
 
     private String generateVerificationCode() {
