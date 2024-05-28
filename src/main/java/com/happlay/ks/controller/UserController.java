@@ -8,6 +8,7 @@ import com.happlay.ks.constant.UserRoleConstant;
 import com.happlay.ks.model.dto.user.LoginUserRequest;
 import com.happlay.ks.model.dto.user.RegisterUserRequest;
 import com.happlay.ks.model.dto.user.AdminRegisterUserRequest;
+import com.happlay.ks.model.dto.user.UpdateUserRequest;
 import com.happlay.ks.model.entity.User;
 import com.happlay.ks.model.vo.user.LoginUserVo;
 import com.happlay.ks.service.IUserService;
@@ -18,7 +19,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
 
 /**
  * <p>
@@ -37,6 +37,22 @@ public class UserController {
     @Resource
     VerificationService verificationService;
 
+    @PostMapping("/sendVerificationEmail")
+    @ApiOperation(value = "发送邮件", notes = "传入邮箱账号")
+    public BaseResponse<String> sendVerificationEmail(@RequestParam String email, HttpServletRequest request) {
+        iUserService.getLoginUser(request);
+        verificationService.sendVerificationEmail(email);
+        return ResultUtils.success("验证码发送成功");
+    }
+
+    @PostMapping("/verifyCode")
+    @ApiOperation(value = "验证邮箱信息，设置邮箱", notes = "传入对应的邮箱和验证码")
+    public BaseResponse<LoginUserVo> verifyCode(@RequestParam String email, @RequestParam String code, HttpServletRequest request) {
+        User loginUser = iUserService.getLoginUser(request);
+        verificationService.verifyCode(email, code);
+        return ResultUtils.success(iUserService.setUserEmail(email, loginUser));
+    }
+
     @PostMapping("/login")
     @ApiOperation(value = "登录", notes = "传入用户名，密码")
     public BaseResponse<LoginUserVo> login(@RequestBody LoginUserRequest request) {
@@ -50,35 +66,37 @@ public class UserController {
      */
     @PostMapping("/register")
     @ApiOperation(value = "注册", notes = "传入用户名，密码，确认密码，默认用户为普通用户")
-    public BaseResponse<LoginUserVo> register(@Valid @RequestBody RegisterUserRequest request) {
+    public BaseResponse<LoginUserVo> register(@RequestBody RegisterUserRequest request) {
         return ResultUtils.success(iUserService.register(request));
     }
 
-    @PostMapping("/sendVerificationEmail")
-    @ApiOperation(value = "发送邮件", notes = "传入邮箱账号")
-    public BaseResponse<String> sendVerificationEmail(@RequestParam String email, HttpServletRequest request) {
-        iUserService.getLoginUser(request);
-        verificationService.sendVerificationEmail(email);
-        return ResultUtils.success("验证码发送成功");
-    }
-
-    @PostMapping("/verifyCode")
-    @ApiOperation(value = "验证邮箱信息", notes = "传入对应的邮箱和验证码")
-    public BaseResponse<LoginUserVo> verifyCode(@RequestParam String email, @RequestParam String code, HttpServletRequest request) {
-        User loginUser = iUserService.getLoginUser(request);
-        verificationService.verifyCode(email, code);
-        return ResultUtils.success(iUserService.setUserEmail(email, loginUser));
-    }
-
-    @PostMapping("/adminRegisterUser")
+    @PostMapping("/register/admin")
     @LoginCheck(mustRole = {UserRoleConstant.ROOT, UserRoleConstant.USER_ADMIN})
     @ApiOperation(value = "超级管理员或管理员添加用户", notes = "传入用户名，密码，确认密码，角色role")
-    public BaseResponse<LoginUserVo> addUserByAdmin(@Valid @RequestBody AdminRegisterUserRequest request, HttpServletRequest servletRequest) {
+    public BaseResponse<LoginUserVo> addUserByAdmin(@RequestBody AdminRegisterUserRequest request, HttpServletRequest servletRequest) {
         User loginUser = iUserService.getLoginUser(servletRequest);
         return ResultUtils.success(iUserService.adminRegisterUser(request, loginUser));
     }
 
-    // 普通用户修改姓名密码
+    @PostMapping("/update/me")
+    @ApiOperation(value = "用户修改姓名密码", notes = "传入新用户名，密码，确认密码，需要用户登录")
+    public BaseResponse<Boolean> updateMe(@RequestBody UpdateUserRequest updateUserRequest, HttpServletRequest request) {
+        User loginUser = iUserService.getLoginUser(request);
+        updateUserRequest.setId(loginUser.getId());
+        return ResultUtils.success(iUserService.updateMe(updateUserRequest, loginUser));
+    }
+
+    @PostMapping("/update")
+    @LoginCheck(mustRole = {UserRoleConstant.ROOT, UserRoleConstant.USER_ADMIN})
+    @ApiOperation(value = "修改用户信息", notes = "id通过请求体传递,只有管理员可操作")
+    public BaseResponse<Boolean> update(@RequestBody UpdateUserRequest updateUserRequest, HttpServletRequest request) {
+        User loginUser = iUserService.getLoginUser(request);
+        return ResultUtils.success(iUserService.updateMe(updateUserRequest, loginUser));
+    }
+
+
+
+    // 重置密码
 
     // 删除用户
 
