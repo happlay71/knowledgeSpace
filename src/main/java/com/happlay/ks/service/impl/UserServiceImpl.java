@@ -14,13 +14,10 @@ import com.happlay.ks.mapper.UserMapper;
 import com.happlay.ks.model.vo.user.LoginUserVo;
 import com.happlay.ks.service.IUserService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.happlay.ks.service.email.VerificationService;
 import com.happlay.ks.utils.JwtUtils;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Objects;
 
@@ -35,9 +32,6 @@ import java.util.Objects;
 @Service
 @Transactional
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IUserService {
-
-    @Resource
-    VerificationService verificationService;
 
     @Override
     public User getLoginUser(HttpServletRequest request) {
@@ -158,7 +152,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     public Boolean updateMe(UpdateUserRequest userUpdateRequest, User loginUser) {
         // 找到待修改的用户
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(User::getUsername, loginUser.getUsername());
+        queryWrapper.eq(User::getId, userUpdateRequest.getId());
         User oldUser = this.getOne(queryWrapper);
         if (userUpdateRequest.getUsername() != null && !userUpdateRequest.getUsername().trim().isEmpty()) {
             oldUser.setUsername(userUpdateRequest.getUsername());
