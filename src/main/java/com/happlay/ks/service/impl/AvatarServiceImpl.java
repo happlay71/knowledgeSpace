@@ -7,7 +7,7 @@ import com.happlay.ks.emums.FileTypeEnum;
 import com.happlay.ks.exception.CommonException;
 import com.happlay.ks.model.entity.Avatar;
 import com.happlay.ks.mapper.AvatarMapper;
-import com.happlay.ks.model.vo.avatar.UploadVo;
+import com.happlay.ks.model.vo.user.AvatarUploadVo;
 import com.happlay.ks.service.IAvatarService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.happlay.ks.utils.FileUtils;
@@ -40,15 +40,15 @@ public class AvatarServiceImpl extends ServiceImpl<AvatarMapper, Avatar> impleme
     FileUtils fileUtils;
 
     @Override
-    public UploadVo createUploadVo(Avatar avatar) {
+    public AvatarUploadVo createUploadVo(Avatar avatar) {
         System.out.println(avatar);
-        UploadVo uploadVo = new UploadVo();
-        BeanUtil.copyProperties(avatar, uploadVo);
-        return uploadVo;
+        AvatarUploadVo avatarUploadVo = new AvatarUploadVo();
+        BeanUtil.copyProperties(avatar, avatarUploadVo);
+        return avatarUploadVo;
     }
 
     @Override
-    public UploadVo uploadAvatar(MultipartFile file, Integer userId) {
+    public AvatarUploadVo uploadAvatar(MultipartFile file, Integer userId) {
         String avatarUrl = fileUtils.saveFile(file, FileTypeEnum.AVATAR, userId);
         // 查询当前用户是否已有头像记录
         LambdaQueryWrapper<Avatar> queryWrapper = new LambdaQueryWrapper<>();

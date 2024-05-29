@@ -7,7 +7,7 @@ import com.happlay.ks.common.ResultUtils;
 import com.happlay.ks.config.FileConfig;
 import com.happlay.ks.exception.CommonException;
 import com.happlay.ks.model.entity.User;
-import com.happlay.ks.model.vo.avatar.UploadVo;
+import com.happlay.ks.model.vo.user.AvatarUploadVo;
 import com.happlay.ks.service.IAvatarService;
 import com.happlay.ks.service.IUserService;
 import io.swagger.annotations.ApiOperation;
@@ -42,7 +42,7 @@ public class AvatarController {
 
     @PostMapping("/uploadAvatar")
     @ApiOperation(value = "上传头像", notes = "上传图片大小不大于10MB")
-    public BaseResponse<UploadVo> uploadAvatar(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
+    public BaseResponse<AvatarUploadVo> uploadAvatar(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
         User loginUser = iUserService.getLoginUser(request);
         if (file.isEmpty()) {
             throw new CommonException(ErrorCode.PARAMS_ERROR, "图片为空");

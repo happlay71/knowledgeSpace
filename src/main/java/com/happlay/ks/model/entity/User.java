@@ -49,6 +49,10 @@ public class User implements Serializable {
     @TableField("role")
     private String role;
 
+    @ApiModelProperty(value = "头像URL")
+    @TableField("avatarUrl")
+    private String avatarUrl;
+
     @ApiModelProperty(value = "是否删除")
     @TableField("isDelete")
     private Integer isDelete;

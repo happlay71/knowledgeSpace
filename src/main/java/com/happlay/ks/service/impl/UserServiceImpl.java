@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.happlay.ks.common.ErrorCode;
 import com.happlay.ks.constant.UserRoleConstant;
+import com.happlay.ks.emums.FileTypeEnum;
 import com.happlay.ks.exception.CommonException;
 import com.happlay.ks.model.dto.user.LoginUserRequest;
 import com.happlay.ks.model.dto.user.RegisterUserRequest;
@@ -11,14 +12,25 @@ import com.happlay.ks.model.dto.user.AdminRegisterUserRequest;
 import com.happlay.ks.model.dto.user.UpdateUserRequest;
 import com.happlay.ks.model.entity.User;
 import com.happlay.ks.mapper.UserMapper;
+import com.happlay.ks.model.vo.user.AvatarUploadVo;
 import com.happlay.ks.model.vo.user.LoginUserVo;
 import com.happlay.ks.service.IUserService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.happlay.ks.utils.FileUtils;
 import com.happlay.ks.utils.JwtUtils;
+import org.springframework.boot.system.ApplicationHome;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.Objects;
 
 /**
@@ -32,6 +44,8 @@ import java.util.Objects;
 @Service
 @Transactional
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IUserService {
+    @Resource
+    FileUtils fileUtils;
 
     @Override
     public User getLoginUser(HttpServletRequest request) {
@@ -110,6 +124,49 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     }
 
     @Override
+    public AvatarUploadVo createUploadVo(User avatar) {
+        System.out.println(avatar);
+        AvatarUploadVo avatarUploadVo = new AvatarUploadVo();
+        BeanUtil.copyProperties(avatar, avatarUploadVo);
+        return avatarUploadVo;
+    }
+
+    @Override
+    public AvatarUploadVo uploadAvatar(MultipartFile file, Integer userId) {
+        // 查询当前用户是否已有头像记录
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(User::getId, userId);
+        User old_avatar = this.getOne(queryWrapper);
+        if (old_avatar.getAvatarUrl() != null) {
+            // 删除路径中保存的头像图片及用户 ID 文件夹
+            //获取jar包所在目录
+            ApplicationHome h = new ApplicationHome(getClass());
+            File jarF = h.getSource();
+            Path userDir = Paths.get(jarF.getParentFile().toString(), "static", old_avatar.getAvatarUrl()).getParent();
+            System.out.println(userDir);
+            if (Files.exists(userDir)) {
+                try {
+                    Files.walk(userDir)
+                            .sorted(Comparator.reverseOrder())
+                            .map(Path::toFile)
+                            .forEach(File::delete);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    throw new CommonException(ErrorCode.SYSTEM_ERROR, "删除旧头像文件夹失败");
+                }
+            }
+
+        }
+        // 更新数据库中当前头像路径信息
+        String avatarUrl = fileUtils.saveFile(file, FileTypeEnum.AVATAR, userId);
+        old_avatar.setAvatarUrl(avatarUrl);
+        old_avatar.setUpdateUser(userId);
+        this.updateById(old_avatar);
+        return createUploadVo(old_avatar);
+
+    }
+
+    @Override
     public LoginUserVo adminRegisterUser(AdminRegisterUserRequest request, User loginUser) {
         String username = request.getUsername();
         if (username == null || username.trim().isEmpty()) {
@@ -149,7 +206,38 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     }
 
     @Override
-    public Boolean updateMe(UpdateUserRequest userUpdateRequest, User loginUser) {
+    public Boolean removeAllById(User user, User loginUser) {
+        // 被删除用户信息
+        User userToDelete = this.getById(user.getId());
+        if (userToDelete == null) {
+            throw new CommonException(ErrorCode.PARAMS_ERROR, "用户不存在");
+        }
+
+        // 用户权限
+        String loginUserRole = loginUser.getRole();
+        String userToDeleteRole = userToDelete.getRole();
+
+        // 超级管理员，可以删除本身外的任何用户
+        if (loginUserRole.equals(UserRoleConstant.ROOT) && userToDeleteRole.equals(loginUserRole)) {
+            throw new CommonException(ErrorCode.PARAMS_ERROR, "超级管理员不能删除自己");
+        }
+        // 普通管理员，不能删除管理员或超级管理员
+        if (loginUserRole.equals(UserRoleConstant.USER_ADMIN)) {
+            if (userToDeleteRole.equals(UserRoleConstant.USER_ADMIN) || userToDeleteRole.equals(UserRoleConstant.ROOT)) {
+                throw new CommonException(ErrorCode.NOT_AUTH_ERROR, "权限不足，不能删除管理员或超级管理员");
+            }
+        }
+        // 执行删除操作
+        boolean isRemoved = this.removeById(user.getId());
+        if (!isRemoved) {
+            throw new CommonException(ErrorCode.SYSTEM_ERROR, "删除用户失败");
+        }
+
+        return isRemoved;
+    }
+
+    @Override
+    public Boolean update(UpdateUserRequest userUpdateRequest, User loginUser) {
         // 找到待修改的用户
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(User::getId, userUpdateRequest.getId());

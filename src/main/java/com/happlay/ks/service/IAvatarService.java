@@ -2,7 +2,7 @@ package com.happlay.ks.service;
 
 import com.happlay.ks.model.entity.Avatar;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.happlay.ks.model.vo.avatar.UploadVo;
+import com.happlay.ks.model.vo.user.AvatarUploadVo;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -15,6 +15,6 @@ import org.springframework.web.multipart.MultipartFile;
  */
 public interface IAvatarService extends IService<Avatar> {
 
-    UploadVo createUploadVo(Avatar avatar);
-    UploadVo uploadAvatar(MultipartFile file, Integer userId);
+    AvatarUploadVo createUploadVo(Avatar avatar);
+    AvatarUploadVo uploadAvatar(MultipartFile file, Integer userId);
 }
