@@ -43,4 +43,8 @@ public class ResultUtils {
     public static BaseResponse<Object> error(ErrorCode errorCode, String message) {
         return new BaseResponse<>(errorCode.getCode(), null, message);
     }
+
+    public static BaseResponse<String> error(String message) {
+        return new BaseResponse<>(1, null, message);
+    }
 }

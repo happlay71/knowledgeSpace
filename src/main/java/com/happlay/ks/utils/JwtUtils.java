@@ -14,16 +14,45 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 public class JwtUtils {
-    public static String createToken(Integer userId) {
+
+    private static final long USER_EXP = 60*60*24L;  // 用户token有效期
+    private static final long EMAIL_EXP = 600L;  // 用户token有效期
+
+    /**
+     * 生成用户、邮箱token
+     * Jwts.builder:
+     * iss(Issuser)：代表这个JWT的签发主体；
+     * sub(Subject)：代表这个JWT的主体，即它的所有人；
+     * aud(Audience)：代表这个JWT的接收对象；
+     * exp(Expiration time)：是一个时间戳，代表这个JWT的过期时间；
+     * nbf(Not Before)：是一个时间戳，代表这个JWT生效的开始时间，意味着在这个时间之前验证JWT是会失败的；
+     * iat(Issued at)：是一个时间戳，代表这个JWT的签发时间；
+     * jti(JWT ID)：是JWT的唯一标识。
+     * @return
+     */
+    public static String createUserToken(Integer userId) {
         SecureDigestAlgorithm<SecretKey, SecretKey> algorithm = Jwts.SIG.HS256;
-        long expMillis = System.currentTimeMillis() + 1000L * JwtConstant.EXP;
+        long expMillis = System.currentTimeMillis() + 1000L * USER_EXP;
         Date exp = new Date(expMillis);
         SecretKey key = Keys.hmacShaKeyFor(JwtConstant.KEY.getBytes(StandardCharsets.UTF_8));
 
         return Jwts.builder()
                 .signWith(key, algorithm)
-                .setExpiration(exp)
+                .expiration(exp)
                 .claim("userId", userId)
+                .compact();
+    }
+
+    public static String createEmailToken(String email) {
+        SecureDigestAlgorithm<SecretKey, SecretKey> algorithm = Jwts.SIG.HS256;
+        long expMillis = System.currentTimeMillis() + 1000L * EMAIL_EXP;
+        Date exp = new Date(expMillis);
+        SecretKey key = Keys.hmacShaKeyFor(JwtConstant.KEY.getBytes(StandardCharsets.UTF_8));
+
+        return Jwts.builder()
+                .signWith(key, algorithm)
+                .expiration(exp)
+                .claim("email", email)
                 .compact();
     }
 
@@ -38,6 +67,24 @@ public class JwtUtils {
                     .parseSignedClaims(token);
             // 获取返回值
             result = claimsJws.getPayload().get("userId", Integer.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new CommonException(ErrorCode.TOKEN_ERROR);
+        }
+        return result;
+    }
+
+    public static String getEmailFromToken(String token) {
+        SecretKey key = Keys.hmacShaKeyFor(JwtConstant.KEY.getBytes(StandardCharsets.UTF_8));
+        String result;
+        try {
+            // 解析token
+            Jws<Claims> claimsJws = Jwts.parser()
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(token);
+            // 获取返回值
+            result = claimsJws.getPayload().get("email", String.class);
         } catch (Exception e) {
             e.printStackTrace();
             throw new CommonException(ErrorCode.TOKEN_ERROR);

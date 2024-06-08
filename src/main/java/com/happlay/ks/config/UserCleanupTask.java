@@ -12,8 +12,8 @@ public class UserCleanupTask {
     @Resource
     IUserService iUserService;
 
-    // 定时清理
-    @Scheduled(cron = "0 0 2 * * ?")
+    // 定时清理：_秒_分_时_日_月_星期_年
+    @Scheduled(cron = "0 0 0 * * ?")
     public void cleanDeletedUsers() {
         iUserService.cleanDeletedUsers();
     }

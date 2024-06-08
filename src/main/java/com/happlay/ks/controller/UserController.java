@@ -7,17 +7,17 @@ import com.happlay.ks.common.ErrorCode;
 import com.happlay.ks.common.ResultUtils;
 import com.happlay.ks.constant.UserRoleConstant;
 import com.happlay.ks.exception.CommonException;
-import com.happlay.ks.model.dto.user.LoginUserRequest;
-import com.happlay.ks.model.dto.user.RegisterUserRequest;
-import com.happlay.ks.model.dto.user.AdminRegisterUserRequest;
-import com.happlay.ks.model.dto.user.UpdateUserRequest;
+import com.happlay.ks.model.dto.email.VerifyCodeRequest;
+import com.happlay.ks.model.dto.user.*;
 import com.happlay.ks.model.entity.User;
 import com.happlay.ks.model.vo.user.AvatarUploadVo;
 import com.happlay.ks.model.vo.user.LoginUserVo;
 import com.happlay.ks.service.IUserService;
 import com.happlay.ks.service.email.VerificationService;
+import com.happlay.ks.utils.JwtUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -41,19 +41,46 @@ public class UserController {
     @Resource
     VerificationService verificationService;
 
-    @PostMapping("/sendVerificationEmail")
-    @ApiOperation(value = "发送邮件", notes = "传入邮箱账号")
-    public BaseResponse<String> sendVerificationEmail(@RequestParam String email, HttpServletRequest request) {
+    @PostMapping("/sendVerificationEmailForSetEmail")
+    @ApiOperation(value = "发送邮件（设置邮箱）", notes = "传入邮箱账号")
+    public BaseResponse<String> sendVerificationEmailForSetEmail(@RequestParam("email") String email, HttpServletRequest request) {
         iUserService.getLoginUser(request);
         verificationService.sendVerificationEmail(email);
         return ResultUtils.success("验证码发送成功");
     }
 
+    @PostMapping("/sendVerificationEmailForResetPassword")
+    @ApiOperation(value = "发送邮件（重置密码）", notes = "传入邮箱账号")
+    public BaseResponse<String> sendVerificationEmailForResetPassword(@RequestParam("email") String email) {
+        verificationService.sendVerificationEmail(email);
+        return ResultUtils.success("验证码发送成功");
+    }
+
     @PostMapping("/verifyCode")
-    @ApiOperation(value = "验证邮箱信息，设置邮箱", notes = "传入对应的邮箱和验证码")
-    public BaseResponse<LoginUserVo> verifyCode(@RequestParam String email, @RequestParam String code, HttpServletRequest request) {
+    @ApiOperation(value = "验证邮箱信息", notes = "传入对应的邮箱(前端传入)和验证码")
+    public BaseResponse<String> verifyCode(VerifyCodeRequest verifyCodeRequest) {
+
+        boolean isVerified = verificationService.verifyCode(verifyCodeRequest.getEmail(), verifyCodeRequest.getCode());
+        if (isVerified) {
+            // 生成短时间有效的 JWT 令牌
+            String token = JwtUtils.createEmailToken(verifyCodeRequest.getEmail());
+            return ResultUtils.success(token);
+        } else {
+            return ResultUtils.error("邮箱验证失败");
+        }
+    }
+
+    @PostMapping("/setEmail")
+    @ApiOperation(value = "设置邮箱", notes = "传入邮箱, emailToken 通过请求头传递")
+    public BaseResponse<LoginUserVo> setEmail(@RequestParam("email") String email,
+                                              @RequestHeader("emailToken") String emailToken,
+                                              HttpServletRequest request) {
         User loginUser = iUserService.getLoginUser(request);
-        verificationService.verifyCode(email, code);
+
+        // 有点多于
+        if (!email.equals(JwtUtils.getEmailFromToken(emailToken))) {
+            throw new CommonException(ErrorCode.TOKEN_ERROR, "邮箱与emailToken不符");
+        }
         return ResultUtils.success(iUserService.setUserEmail(email, loginUser));
     }
 
@@ -106,7 +133,6 @@ public class UserController {
         return ResultUtils.success(iUserService.removeAllById(loginUser, loginUser));
     }
 
-    //
     @PostMapping("/delete/{id}")
     @LoginCheck(mustRole = {UserRoleConstant.ROOT, UserRoleConstant.USER_ADMIN})
     @ApiOperation(value = "删除用户(管理员)", notes = "id通过url传递，只有管理员可操作")
@@ -116,10 +142,12 @@ public class UserController {
         return ResultUtils.success(iUserService.removeAllById(user, loginUser));
     }
 
-    // 重置密码
-    public BaseResponse<Boolean> resetPassword(HttpServletRequest request) {
-        User loginUser = iUserService.getLoginUser(request);
-        return ResultUtils.success(iUserService.resetPassword(loginUser));
+    @PostMapping("/resetPassword")
+    @ApiOperation(value = "重置密码", notes = "验证完邮箱后，传入密码，二次密码")
+    public BaseResponse<Boolean> resetPassword(@RequestHeader("emailToken") String emailToken,
+                                               ResetUserPasswordRequest resetRequest) {
+        String email = JwtUtils.getEmailFromToken(emailToken);
+        return ResultUtils.success(iUserService.resetPassword(email, resetRequest));
     }
 
     @PostMapping("/update/me")
@@ -137,7 +165,7 @@ public class UserController {
         User loginUser = iUserService.getLoginUser(request);
         return ResultUtils.success(iUserService.update(updateUserRequest, loginUser));
     }
-    // 根据用户名查找用户
+//    // 根据用户名查找用户
 //    @GetMapping("/search")
 //    public BaseResponse<Page<UserVo>> searchUsers(
 //            @RequestParam(required = false) String username,

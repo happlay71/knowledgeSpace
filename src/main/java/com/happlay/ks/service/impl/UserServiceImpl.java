@@ -7,10 +7,7 @@ import com.happlay.ks.common.ErrorCode;
 import com.happlay.ks.constant.UserRoleConstant;
 import com.happlay.ks.emums.FileTypeEnum;
 import com.happlay.ks.exception.CommonException;
-import com.happlay.ks.model.dto.user.LoginUserRequest;
-import com.happlay.ks.model.dto.user.RegisterUserRequest;
-import com.happlay.ks.model.dto.user.AdminRegisterUserRequest;
-import com.happlay.ks.model.dto.user.UpdateUserRequest;
+import com.happlay.ks.model.dto.user.*;
 import com.happlay.ks.model.entity.User;
 import com.happlay.ks.mapper.UserMapper;
 import com.happlay.ks.model.vo.user.AvatarUploadVo;
@@ -54,8 +51,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         // 查找isDelete为1的用户
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(User::getIsDelete, 1);
-//        List<User> deletedUsers = this.list(queryWrapper);
-
         this.remove(queryWrapper);
 
     }
@@ -70,7 +65,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         System.out.println(user);
         LoginUserVo loginUserVo = new LoginUserVo();
         BeanUtil.copyProperties(user, loginUserVo);
-        loginUserVo.setToken(JwtUtils.createToken(user.getId()));
+        loginUserVo.setToken(JwtUtils.createUserToken(user.getId()));
         return loginUserVo;
     }
 
@@ -251,8 +246,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     }
 
     @Override
-    public Boolean resetPassword(User loginUser) {
-        return null;
+    public Boolean resetPassword(String email, ResetUserPasswordRequest resetRequest) {
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(User::getEmail, email);
+        User user = this.getOne(queryWrapper);
+        if (user == null) throw new CommonException(ErrorCode.PARAMS_ERROR, "用户不存在");
+        if (!resetRequest.getPassword().equals(resetRequest.getPassword2()))
+            throw new CommonException(ErrorCode.PARAMS_ERROR, "两次密码不匹配");
+        user.setPassword(resetRequest.getPassword());
+        user.setUpdateUser(user.getId());
+
+        return this.updateById(user);
     }
 
     @Override
