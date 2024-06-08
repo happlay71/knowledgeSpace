@@ -99,26 +99,6 @@ public class UserController {
         return ResultUtils.success(iUserService.adminRegisterUser(request, loginUser));
     }
 
-    @PostMapping("/update/me")
-    @ApiOperation(value = "用户修改姓名密码", notes = "传入新用户名，密码，确认密码，需要用户登录")
-    public BaseResponse<Boolean> updateMe(@RequestBody UpdateUserRequest updateUserRequest, HttpServletRequest request) {
-        User loginUser = iUserService.getLoginUser(request);
-        updateUserRequest.setId(loginUser.getId());
-        return ResultUtils.success(iUserService.update(updateUserRequest, loginUser));
-    }
-
-    @PostMapping("/update")
-    @LoginCheck(mustRole = {UserRoleConstant.ROOT, UserRoleConstant.USER_ADMIN})
-    @ApiOperation(value = "修改用户信息", notes = "id通过请求体传递,只有管理员可操作")
-    public BaseResponse<Boolean> update(@RequestBody UpdateUserRequest updateUserRequest, HttpServletRequest request) {
-        User loginUser = iUserService.getLoginUser(request);
-        return ResultUtils.success(iUserService.update(updateUserRequest, loginUser));
-    }
-
-
-
-    // 重置密码
-
     @PostMapping("/delete/me")
     @ApiOperation(value = "删除用户(自己)", notes = "需登录")
     public BaseResponse<Boolean> deleteMe(HttpServletRequest request) {
@@ -134,6 +114,28 @@ public class UserController {
         User user = iUserService.getById(id);
         User loginUser = iUserService.getLoginUser(request);
         return ResultUtils.success(iUserService.removeAllById(user, loginUser));
+    }
+
+    // 重置密码
+    public BaseResponse<Boolean> resetPassword(HttpServletRequest request) {
+        User loginUser = iUserService.getLoginUser(request);
+        return ResultUtils.success(iUserService.resetPassword(loginUser));
+    }
+
+    @PostMapping("/update/me")
+    @ApiOperation(value = "用户修改姓名密码", notes = "传入新用户名，密码，确认密码，需要用户登录")
+    public BaseResponse<Boolean> updateMe(@RequestBody UpdateUserRequest updateUserRequest, HttpServletRequest request) {
+        User loginUser = iUserService.getLoginUser(request);
+        updateUserRequest.setId(loginUser.getId());
+        return ResultUtils.success(iUserService.update(updateUserRequest, loginUser));
+    }
+
+    @PostMapping("/update")
+    @LoginCheck(mustRole = {UserRoleConstant.ROOT, UserRoleConstant.USER_ADMIN})
+    @ApiOperation(value = "修改用户信息", notes = "id通过请求体传递,只有管理员可操作")
+    public BaseResponse<Boolean> update(@RequestBody UpdateUserRequest updateUserRequest, HttpServletRequest request) {
+        User loginUser = iUserService.getLoginUser(request);
+        return ResultUtils.success(iUserService.update(updateUserRequest, loginUser));
     }
     // 根据用户名查找用户
 //    @GetMapping("/search")

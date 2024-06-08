@@ -22,15 +22,28 @@ import javax.servlet.http.HttpServletRequest;
  */
 public interface IUserService extends IService<User> {
 
+    void cleanDeletedUsers();
+
     LoginUserVo register(RegisterUserRequest request);
+
     LoginUserVo setUserEmail(String email, User loginUser);
+
     User getLoginUser(HttpServletRequest request);
+
     AvatarUploadVo createUploadVo(User avatar);
+
     AvatarUploadVo uploadAvatar(MultipartFile file, Integer userId);
+
     LoginUserVo createLoginUserVo(User user);
+
     LoginUserVo login(LoginUserRequest request);
+
     LoginUserVo adminRegisterUser(AdminRegisterUserRequest request, User loginUser);
+
     Boolean removeAllById(User user, User loginUser);
+
+    Boolean resetPassword(User loginUser);
+
     Boolean update(UpdateUserRequest userUpdateRequest, User loginUser);
 
 }

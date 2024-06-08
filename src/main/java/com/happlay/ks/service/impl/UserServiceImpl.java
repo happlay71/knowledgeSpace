@@ -2,6 +2,7 @@ package com.happlay.ks.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.happlay.ks.common.ErrorCode;
 import com.happlay.ks.constant.UserRoleConstant;
 import com.happlay.ks.emums.FileTypeEnum;
@@ -31,6 +32,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -46,6 +48,17 @@ import java.util.Objects;
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IUserService {
     @Resource
     FileUtils fileUtils;
+
+    @Override
+    public void cleanDeletedUsers() {
+        // 查找isDelete为1的用户
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(User::getIsDelete, 1);
+//        List<User> deletedUsers = this.list(queryWrapper);
+
+        this.remove(queryWrapper);
+
+    }
 
     @Override
     public User getLoginUser(HttpServletRequest request) {
@@ -228,12 +241,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             }
         }
         // 执行删除操作
+        //
         boolean isRemoved = this.removeById(user.getId());
         if (!isRemoved) {
             throw new CommonException(ErrorCode.SYSTEM_ERROR, "删除用户失败");
         }
 
         return isRemoved;
+    }
+
+    @Override
+    public Boolean resetPassword(User loginUser) {
+        return null;
     }
 
     @Override
