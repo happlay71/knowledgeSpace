@@ -3,7 +3,10 @@ package com.happlay.ks.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.happlay.ks.common.ErrorCode;
+import com.happlay.ks.common.PageRequest;
 import com.happlay.ks.constant.UserRoleConstant;
 import com.happlay.ks.emums.FileTypeEnum;
 import com.happlay.ks.exception.CommonException;
@@ -12,6 +15,7 @@ import com.happlay.ks.model.entity.User;
 import com.happlay.ks.mapper.UserMapper;
 import com.happlay.ks.model.vo.user.AvatarUploadVo;
 import com.happlay.ks.model.vo.user.LoginUserVo;
+import com.happlay.ks.model.vo.user.UserVo;
 import com.happlay.ks.service.IUserService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.happlay.ks.utils.FileUtils;
@@ -28,9 +32,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -289,5 +295,54 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         }
         oldUser.setUpdateUser(loginUser.getId());
         return this.updateById(oldUser);
+    }
+
+    @Override
+    public UserVo getVo(User user) {
+        if (user == null) throw new CommonException(ErrorCode.NOT_FOUND_ERROR);
+        UserVo userVo = new UserVo();
+        BeanUtil.copyProperties(user, userVo);
+        return userVo;
+    }
+
+    @Override
+    public List<UserVo> getVos(List<User> users) {
+        ArrayList<UserVo> userVos = new ArrayList<>();
+        for (User user : users) {
+            userVos.add(getVo(user));
+        }
+        return userVos;
+    }
+
+    @Override
+    public Page<UserVo> selectPage(PageRequest pageRequest) {
+        Page<User> userPage = new Page<>(pageRequest.getCurrent(), pageRequest.getPageSize());
+        this.page(userPage);
+        Page<UserVo> userVoPage = new Page<>(userPage.getCurrent(), userPage.getSize(), userPage.getTotal());
+        userVoPage.setRecords(this.getVos(userPage.getRecords()));
+        return userVoPage;
+    }
+
+    @Override
+    public Page<UserVo> selectName(String name, PageRequest pageRequest) {
+        // 模糊查询匹配对象
+        Page<User> userPage = new Page<>(pageRequest.getCurrent(), pageRequest.getPageSize());
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.like(StringUtils.isNotEmpty(name), User::getUsername, name);
+        queryWrapper.orderByDesc(User::getUpdateTime);
+        this.page(userPage, queryWrapper);
+
+        Page<UserVo> userVoPage = new Page<>();
+        BeanUtil.copyProperties(userPage, userVoPage, "records");
+
+        List<User> records = userPage.getRecords();
+        List<UserVo> list = records.stream().map((user -> {
+            UserVo userVo = new UserVo();
+            BeanUtil.copyProperties(user, userVo);
+            return userVo;
+        })).collect(Collectors.toList());
+
+        userVoPage.setRecords(list);
+        return userVoPage;
     }
 }

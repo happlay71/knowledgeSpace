@@ -1,13 +1,17 @@
 package com.happlay.ks.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.happlay.ks.common.PageRequest;
 import com.happlay.ks.model.dto.user.*;
 import com.happlay.ks.model.entity.User;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.happlay.ks.model.vo.user.AvatarUploadVo;
 import com.happlay.ks.model.vo.user.LoginUserVo;
+import com.happlay.ks.model.vo.user.UserVo;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
  * <p>
@@ -42,5 +46,13 @@ public interface IUserService extends IService<User> {
     Boolean resetPassword(String email, ResetUserPasswordRequest resetRequest);
 
     Boolean update(UpdateUserRequest userUpdateRequest, User loginUser);
+
+    UserVo getVo(User user);
+
+    List<UserVo> getVos(List<User> users);
+
+    Page<UserVo> selectPage(PageRequest pageRequest);
+
+    Page<UserVo> selectName(String name, PageRequest pageRequest);
 
 }

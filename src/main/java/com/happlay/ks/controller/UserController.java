@@ -1,9 +1,11 @@
 package com.happlay.ks.controller;
 
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.happlay.ks.annotation.LoginCheck;
 import com.happlay.ks.common.BaseResponse;
 import com.happlay.ks.common.ErrorCode;
+import com.happlay.ks.common.PageRequest;
 import com.happlay.ks.common.ResultUtils;
 import com.happlay.ks.constant.UserRoleConstant;
 import com.happlay.ks.exception.CommonException;
@@ -12,11 +14,13 @@ import com.happlay.ks.model.dto.user.*;
 import com.happlay.ks.model.entity.User;
 import com.happlay.ks.model.vo.user.AvatarUploadVo;
 import com.happlay.ks.model.vo.user.LoginUserVo;
+import com.happlay.ks.model.vo.user.UserVo;
 import com.happlay.ks.service.IUserService;
 import com.happlay.ks.service.email.VerificationService;
 import com.happlay.ks.utils.JwtUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.models.auth.In;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -165,14 +169,29 @@ public class UserController {
         User loginUser = iUserService.getLoginUser(request);
         return ResultUtils.success(iUserService.update(updateUserRequest, loginUser));
     }
-//    // 根据用户名查找用户
-//    @GetMapping("/search")
-//    public BaseResponse<Page<UserVo>> searchUsers(
-//            @RequestParam(required = false) String username,
-//            @RequestParam(defaultValue = "1") int page,
-//            @RequestParam(defaultValue = "10") int size) {
-//        return userService.searchUsers(username, page, size);
-//    }
 
-    // 分页查找用户
+    @GetMapping("/search")
+    @ApiOperation(value = "用户查询（模糊匹配）", notes = "传入字符串，页码和页面大小")
+    public BaseResponse<Page<UserVo>> searchUsers(
+            @RequestParam(required = false) String username,
+            PageRequest pageRequest,
+            HttpServletRequest request) {
+        iUserService.getLoginUser(request);
+        Page<UserVo> userVoPage = iUserService.selectName(username, pageRequest);
+        return ResultUtils.success(userVoPage);
+    }
+
+    @GetMapping("/page")
+    @ApiOperation(value = "分页查询", notes = "传入页码和页面大小")
+    public BaseResponse<Page<UserVo>> selectPage(PageRequest pageRequest, HttpServletRequest request) {
+        iUserService.getLoginUser(request);
+        Page<UserVo> userVoPage = iUserService.selectPage(pageRequest);
+        return ResultUtils.success(userVoPage);
+    }
+
+//    // 根据id查询--还得包括该用户的文件夹及文件
+//    @GetMapping("/select/{id}")
+//    public BaseResponse<User> selectById(@RequestParam("id") Integer id) {
+//
+//    }
 }
