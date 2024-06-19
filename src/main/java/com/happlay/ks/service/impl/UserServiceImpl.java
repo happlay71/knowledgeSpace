@@ -52,13 +52,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     @Resource
     FileUtils fileUtils;
 
+    @Resource
+    UserMapper userMapper;
+
     @Override
     public void cleanDeletedUsers() {
         // 查找isDelete为1的用户
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(User::getIsDelete, 1);
-        this.remove(queryWrapper);
-
+        List<User> users = userMapper.selectList(queryWrapper);
+        for (User user : users) {
+            userMapper.deleteById(user.getId());
+        }
     }
 
     @Override
