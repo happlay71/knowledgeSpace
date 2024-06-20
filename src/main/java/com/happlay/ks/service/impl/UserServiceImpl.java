@@ -20,6 +20,7 @@ import com.happlay.ks.service.IUserService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.happlay.ks.utils.FileUtils;
 import com.happlay.ks.utils.JwtUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.system.ApplicationHome;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,6 +50,9 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IUserService {
+
+    @Value("${file.storage.root.path}")
+    private String storageRootPath;
     @Resource
     FileUtils fileUtils;
 
@@ -150,18 +154,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         return avatarUploadVo;
     }
 
-    @Override
     public AvatarUploadVo uploadAvatar(MultipartFile file, Integer userId) {
         // 查询当前用户是否已有头像记录
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(User::getId, userId);
-        User old_avatar = this.getOne(queryWrapper);
-        if (old_avatar.getAvatarUrl() != null) {
+        User oldAvatar = this.getOne(queryWrapper);
+
+        if (oldAvatar.getAvatarUrl() != null) {
             // 删除路径中保存的头像图片及用户 ID 文件夹
-            //获取jar包所在目录
-            ApplicationHome h = new ApplicationHome(getClass());
-            File jarF = h.getSource();
-            Path userDir = Paths.get(jarF.getParentFile().toString(), "static", old_avatar.getAvatarUrl()).getParent();
+            String basePath = new File(storageRootPath).getAbsolutePath();
+            System.out.println(basePath);
+            String relativePath = oldAvatar.getAvatarUrl().replaceFirst("^ksStatic\\\\", "");
+            Path userDir = Paths.get(basePath, relativePath).getParent();
             System.out.println(userDir);
             if (Files.exists(userDir)) {
                 try {
@@ -174,16 +178,57 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
                     throw new CommonException(ErrorCode.SYSTEM_ERROR, "删除旧头像文件夹失败");
                 }
             }
-
         }
+
         // 更新数据库中当前头像路径信息
         String avatarUrl = fileUtils.saveFile(file, FileTypeEnum.AVATAR, userId);
-        old_avatar.setAvatarUrl(avatarUrl);
-        old_avatar.setUpdateUser(userId);
-        this.updateById(old_avatar);
-        return createUploadVo(old_avatar);
-
+        oldAvatar.setAvatarUrl(avatarUrl);
+        oldAvatar.setUpdateUser(userId);
+        this.updateById(oldAvatar);
+        return createUploadVo(oldAvatar);
     }
+
+    private String getStorageRootPath() {
+        //获取jar包所在目录
+        ApplicationHome h = new ApplicationHome(getClass());
+        File jarF = h.getSource();
+        return Paths.get(jarF.getParentFile().getParent(), "ksStatic").toString();
+    }
+
+//    @Override
+//    public AvatarUploadVo uploadAvatar(MultipartFile file, Integer userId) {
+//        // 查询当前用户是否已有头像记录
+//        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+//        queryWrapper.eq(User::getId, userId);
+//        User old_avatar = this.getOne(queryWrapper);
+//        if (old_avatar.getAvatarUrl() != null) {
+//            // 删除路径中保存的头像图片及用户 ID 文件夹
+//            //获取jar包所在目录
+//            ApplicationHome h = new ApplicationHome(getClass());
+//            File jarF = h.getSource();
+//            Path userDir = Paths.get(jarF.getParentFile().toString(), "static", old_avatar.getAvatarUrl()).getParent();
+//            System.out.println(userDir);
+//            if (Files.exists(userDir)) {
+//                try {
+//                    Files.walk(userDir)
+//                            .sorted(Comparator.reverseOrder())
+//                            .map(Path::toFile)
+//                            .forEach(File::delete);
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                    throw new CommonException(ErrorCode.SYSTEM_ERROR, "删除旧头像文件夹失败");
+//                }
+//            }
+//
+//        }
+//        // 更新数据库中当前头像路径信息
+//        String avatarUrl = fileUtils.saveFile(file, FileTypeEnum.AVATAR, userId);
+//        old_avatar.setAvatarUrl(avatarUrl);
+//        old_avatar.setUpdateUser(userId);
+//        this.updateById(old_avatar);
+//        return createUploadVo(old_avatar);
+//
+//    }
 
     @Override
     public LoginUserVo adminRegisterUser(AdminRegisterUserRequest request, User loginUser) {

@@ -43,7 +43,7 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder> impleme
     @Override
     public String createFolder(CreateFolderRequest createFolderRequest, Integer userId) {
         Folder folder = new Folder();
-        if (StringUtils.isEmpty(createFolderRequest.getName()))
+        if (StringUtils.isEmpty(createFolderRequest.getName()) || createFolderRequest.getName() == null)
             throw new CommonException(ErrorCode.PARAMS_ERROR, "文件夹名为空");
 
         folder.setName(createFolderRequest.getName());
@@ -56,7 +56,6 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder> impleme
 
         // 如果没有父文件夹，则将 parentId 设置为自身 id
         if (createFolderRequest.getParentId() == 0) {
-
             folder.setParentId(folder.getId());
         } else {
             LambdaQueryWrapper<Folder> queryWrapper = new LambdaQueryWrapper<>();
@@ -89,7 +88,7 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder> impleme
         }
 
         // 检查新文件夹名是否为空
-        if (StringUtils.isEmpty(updateNameRequest.getName())) {
+        if (StringUtils.isEmpty(updateNameRequest.getName()) || updateNameRequest.getName() == null) {
             throw new CommonException(ErrorCode.PARAMS_ERROR, "新文件夹名为空");
         }
 

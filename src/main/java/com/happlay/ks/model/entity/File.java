@@ -18,7 +18,7 @@ import lombok.experimental.Accessors;
  * </p>
  *
  * @author happlay
- * @since 2024-05-23
+ * @since 2024-06-20
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -48,6 +48,14 @@ public class File implements Serializable {
     @ApiModelProperty(value = "文件内容，Markdown格式")
     @TableField("content")
     private String content;
+
+    @ApiModelProperty(value = "文件路径")
+    @TableField("path")
+    private String path;
+
+    @ApiModelProperty(value = "文件类型")
+    @TableField("file_type")
+    private String fileType;
 
     @ApiModelProperty(value = "是否删除")
     @TableField("isDelete")
