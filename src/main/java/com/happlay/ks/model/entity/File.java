@@ -45,10 +45,6 @@ public class File implements Serializable {
     @TableField("name")
     private String name;
 
-    @ApiModelProperty(value = "文件内容，Markdown格式")
-    @TableField("content")
-    private String content;
-
     @ApiModelProperty(value = "文件路径")
     @TableField("path")
     private String path;

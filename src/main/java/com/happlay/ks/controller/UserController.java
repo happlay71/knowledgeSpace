@@ -122,6 +122,8 @@ public class UserController {
         }
     }
 
+    // 删除头像
+
     @PostMapping("/register/admin")
     @LoginCheck(mustRole = {UserRoleConstant.ROOT, UserRoleConstant.USER_ADMIN})
     @ApiOperation(value = "超级管理员或管理员添加用户", notes = "传入用户名，密码，确认密码，角色role")

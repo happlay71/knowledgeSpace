@@ -8,11 +8,7 @@ import com.happlay.ks.model.entity.User;
 import com.happlay.ks.service.IFileService;
 import com.happlay.ks.service.IUserService;
 import io.swagger.annotations.ApiOperation;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -44,4 +40,17 @@ public class FileController {
         return ResultUtils.success(path);
     }
 
+    // 创建md文档
+
+    // 修改文件内容
+
+    // 删除文件
+    @PostMapping("/delete")
+    @ApiOperation(value = "删除文件", notes = "需要用户登录，传入待删除文件的id")
+    public BaseResponse<Boolean> deleteFile(@RequestParam("id") Integer id, HttpServletRequest request) {
+        User loginUser = iUserService.getLoginUser(request);
+        return ResultUtils.success(iFileService.deleteFile(id, loginUser.getId()));
+    }
+
+    // 查看文件内容
 }

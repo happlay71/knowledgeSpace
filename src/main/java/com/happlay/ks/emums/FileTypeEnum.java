@@ -2,8 +2,8 @@ package com.happlay.ks.emums;
 
 public enum FileTypeEnum {
     AVATAR("avatar"),  // 头像文件
-    FILE("file"),  // 文档文件，例如包含文字的文件
-    DOCUMENT("document");  // 用于区分创建的文件类型，如md文档
+    PHOTO("document/photo"),  // 图片文件
+    DOCUMENT("document");  // 文档文件
     private final String type;
 
     FileTypeEnum(String type) {
@@ -12,5 +12,23 @@ public enum FileTypeEnum {
 
     public String getType() {
         return type;
+    }
+
+    public static FileTypeEnum fromFileName(String fileName) {
+        String extension = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
+        switch (extension) {
+            case "jpg":
+            case "jpeg":
+            case "png":
+            case "gif":
+                return PHOTO;  // 图片文件类型
+            case "md":
+            case "pdf":
+            case "doc":
+            case "docx":
+                return DOCUMENT;  // 文档文件类型
+            default:
+                throw new IllegalArgumentException("Unsupported file type: " + extension);
+        }
     }
 }

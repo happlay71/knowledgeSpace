@@ -12,6 +12,7 @@ import com.happlay.ks.model.entity.Folder;
 import com.happlay.ks.mapper.FolderMapper;
 import com.happlay.ks.model.entity.User;
 import com.happlay.ks.model.vo.folder.FolderVo;
+import com.happlay.ks.service.IFileService;
 import com.happlay.ks.service.IFolderService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
@@ -35,16 +36,22 @@ import java.util.stream.Collectors;
 public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder> implements IFolderService {
 
     @Resource
-    FolderMapper folderMapper;
+    IFileService iFileService;
 
     @Resource
-    FileMapper fileMapper;
+    FolderMapper folderMapper;
 
     @Override
     public String createFolder(CreateFolderRequest createFolderRequest, Integer userId) {
         Folder folder = new Folder();
         if (StringUtils.isEmpty(createFolderRequest.getName()) || createFolderRequest.getName() == null)
             throw new CommonException(ErrorCode.PARAMS_ERROR, "文件夹名为空");
+
+        LambdaQueryWrapper<Folder> oldQueryWrapper = new LambdaQueryWrapper<>();
+        oldQueryWrapper.eq(Folder::getName, createFolderRequest.getName());
+        if (this.getOne(oldQueryWrapper) != null) {
+            throw new CommonException(ErrorCode.PARAMS_ERROR, "文件夹名不能重复");
+        }
 
         folder.setName(createFolderRequest.getName());
         folder.setUserId(userId);
@@ -56,10 +63,10 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder> impleme
 
         // 如果没有父文件夹，则将 parentId 设置为自身 id
         if (createFolderRequest.getParentId() == 0) {
-            folder.setParentId(folder.getId());
+            folder.setParentId(0);
         } else {
             LambdaQueryWrapper<Folder> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.eq(Folder::getParentId, createFolderRequest.getParentId());
+            queryWrapper.eq(Folder::getId, createFolderRequest.getParentId());
             if (this.getOne(queryWrapper) == null) {
                 throw new CommonException(ErrorCode.PARAMS_ERROR, "不存在对应父文件");
             }
@@ -92,6 +99,10 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder> impleme
             throw new CommonException(ErrorCode.PARAMS_ERROR, "新文件夹名为空");
         }
 
+        if (this.getOne(new LambdaQueryWrapper<Folder>().eq(Folder::getName, updateNameRequest.getName())) != null) {
+            throw new CommonException(ErrorCode.PARAMS_ERROR, "文件夹名不能重复");
+        }
+
         // 更新文件夹名和更新者 ID
         folder.setName(updateNameRequest.getName());
         folder.setUpdateUser(userId);
@@ -109,12 +120,32 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder> impleme
         queryWrapper.eq(Folder::getId, id);
         Folder folder = this.getOne(queryWrapper);
 
-        if (!folder.getUserId().equals(userId)) {
+        if (folder == null || !folder.getUserId().equals(userId)) {
             throw new CommonException(ErrorCode.NOT_AUTH_ERROR, "其他用户禁止删除");
         }
-        fileMapper.deleteByFolderId(id);
-        folderMapper.deleteByParentId(id);
+
+        // 递归删除文件夹及其子文件夹和文件
+        deleteFolderRecursively(id, userId);
+
         return folderMapper.deleteById(id);
+    }
+
+    private void deleteFolderRecursively(Integer folderId, Integer userId) {
+        // 查询文件夹下的所有子文件夹
+        LambdaQueryWrapper<Folder> folderQueryWrapper = new LambdaQueryWrapper<>();
+        folderQueryWrapper.eq(Folder::getParentId, folderId);
+        List<Folder> subFolders = this.list(folderQueryWrapper);
+
+        // 删除子文件夹及其内容
+        for (Folder subFolder : subFolders) {
+            deleteFolderRecursively(subFolder.getId(), userId);
+        }
+
+        // 删除当前文件夹下的所有文件
+        iFileService.deleteByFolder(folderId, userId);
+
+        // 删除当前文件夹
+        folderMapper.deleteById(folderId);
     }
 
     @Override

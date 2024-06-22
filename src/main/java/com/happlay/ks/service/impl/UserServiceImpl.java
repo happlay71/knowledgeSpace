@@ -2,7 +2,6 @@ package com.happlay.ks.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.happlay.ks.common.ErrorCode;
@@ -10,15 +9,19 @@ import com.happlay.ks.common.PageRequest;
 import com.happlay.ks.constant.UserRoleConstant;
 import com.happlay.ks.emums.FileTypeEnum;
 import com.happlay.ks.exception.CommonException;
+import com.happlay.ks.mapper.FileMapper;
+import com.happlay.ks.mapper.FolderMapper;
 import com.happlay.ks.model.dto.user.*;
+import com.happlay.ks.model.entity.Folder;
 import com.happlay.ks.model.entity.User;
 import com.happlay.ks.mapper.UserMapper;
 import com.happlay.ks.model.vo.user.AvatarUploadVo;
 import com.happlay.ks.model.vo.user.LoginUserVo;
 import com.happlay.ks.model.vo.user.UserVo;
+import com.happlay.ks.service.IFolderService;
 import com.happlay.ks.service.IUserService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.happlay.ks.utils.FileUtils;
+import com.happlay.ks.utils.file.FileUtils;
 import com.happlay.ks.utils.JwtUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.system.ApplicationHome;
@@ -55,6 +58,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     private String storageRootPath;
     @Resource
     FileUtils fileUtils;
+
+    @Resource
+    IFolderService iFolderService;
 
     @Resource
     UserMapper userMapper;
@@ -291,9 +297,22 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
                 throw new CommonException(ErrorCode.NOT_AUTH_ERROR, "权限不足，不能删除管理员或超级管理员");
             }
         }
+        // 普通用户，只能删除自己
+        if (loginUserRole.equals(UserRoleConstant.USER)) {
+            if (!Objects.equals(loginUser.getId(), user.getId())) {
+                throw new CommonException(ErrorCode.NOT_AUTH_ERROR, "不能修改他人信息");
+            }
+        }
+
         // 执行删除操作
-        //
-        boolean isRemoved = this.removeById(user.getId());
+        // 1.头像删除
+        // 2.文件删除
+        LambdaQueryWrapper<Folder> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Folder::getUserId, user.getId()).eq(Folder::getParentId, 0);
+        Folder folder = iFolderService.getOne(queryWrapper);
+        iFolderService.deleteById(folder.getId(), user.getId());
+        // 3.用户数据删除
+        boolean isRemoved = userMapper.deleteById(user.getId());
         if (!isRemoved) {
             throw new CommonException(ErrorCode.SYSTEM_ERROR, "删除用户失败");
         }
