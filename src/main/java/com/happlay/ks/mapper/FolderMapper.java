@@ -5,6 +5,9 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+
+import java.util.List;
 
 /**
  * <p>
@@ -15,6 +18,13 @@ import org.apache.ibatis.annotations.Param;
  * @since 2024-05-23
  */
 public interface FolderMapper extends BaseMapper<Folder> {
+
+    @Select("SELECT COUNT(*) FROM folder WHERE id = #{folderId} AND user_id = #{userId}")
+    int countFolderBelongsToUser(@Param("folderId") Integer folderId, @Param("userId") Integer userId);
+
+    @Select("SELECT id FROM Folder WHERE parent_id = #{parentId}")
+    List<Integer> getSubfolderIds(Integer parentId);
+
     @Delete("DELETE FROM folder WHERE id = #{id}")
     Boolean deleteById(@Param("id") Integer id);
 

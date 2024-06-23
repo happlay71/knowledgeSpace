@@ -12,6 +12,5 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class CreateFolderRequest {
     private Integer parentId;
-
     private String name;
 }

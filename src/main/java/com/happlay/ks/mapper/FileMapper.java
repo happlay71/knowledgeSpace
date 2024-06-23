@@ -18,10 +18,10 @@ public interface FileMapper extends BaseMapper<File> {
 
     @Delete("DELETE FROM file WHERE id = #{id}")
     Boolean deleteById(@Param("id") Integer id);
-
-    @Delete("DELETE FROM file WHERE folder_id = #{folderId}")
-    Boolean deleteByFolderId(@Param("folderId") Integer folderId);
-
-    @Delete("DELETE FROM file WHERE user_id = #{userId}")
-    Boolean deleteByUserId(@Param("userId") Integer userId);
+//
+//    @Delete("DELETE FROM file WHERE folder_id = #{folderId}")
+//    Boolean deleteByFolderId(@Param("folderId") Integer folderId);
+//
+//    @Delete("DELETE FROM file WHERE user_id = #{userId}")
+//    Boolean deleteByUserId(@Param("userId") Integer userId);
 }

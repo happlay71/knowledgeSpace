@@ -61,7 +61,7 @@ public class UserController {
     }
 
     @PostMapping("/verifyCode")
-    @ApiOperation(value = "验证邮箱信息", notes = "传入对应的邮箱(前端传入)和验证码")
+    @ApiOperation(value = "验证邮箱信息", notes = "传入对应的邮箱(前端传入)和验证码, 生成Token")
     public BaseResponse<String> verifyCode(VerifyCodeRequest verifyCodeRequest) {
 
         boolean isVerified = verificationService.verifyCode(verifyCodeRequest.getEmail(), verifyCodeRequest.getCode());
@@ -123,6 +123,12 @@ public class UserController {
     }
 
     // 删除头像
+    @PostMapping("/delAvatar")
+    @ApiOperation(value = "删除头像", notes = "需要用户登录")
+    public BaseResponse<Boolean> delAvatar(HttpServletRequest request) {
+        User loginUser = iUserService.getLoginUser(request);
+        return ResultUtils.success(iUserService.deleteAvatar(loginUser));
+    }
 
     @PostMapping("/register/admin")
     @LoginCheck(mustRole = {UserRoleConstant.ROOT, UserRoleConstant.USER_ADMIN})

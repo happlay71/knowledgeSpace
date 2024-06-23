@@ -19,11 +19,13 @@ import java.util.List;
  */
 public interface IFolderService extends IService<Folder> {
 
-    String createFolder(CreateFolderRequest createFolderRequest, Integer userId);
+    Boolean folderBelongsToUser(Integer folderId, Integer userId);
 
-    String updataName(UpdateNameRequest updateNameRequest, Integer userId);
+    String createFolder(CreateFolderRequest createFolderRequest, User user);
 
-    Boolean deleteById(Integer id, Integer userId);
+    String updataName(UpdateNameRequest updateNameRequest, User user);
+
+    Boolean deleteById(Integer id, User user);
 
     List<FolderVo> selectByUserId(Integer id);
 }

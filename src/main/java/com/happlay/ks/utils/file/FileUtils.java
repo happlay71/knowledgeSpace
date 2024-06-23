@@ -107,15 +107,15 @@ public class FileUtils {
         }
     }
 
-    private String getFolderPath(FileTypeEnum fileTypeEnum, int id) {
+    public String getFolderPath(FileTypeEnum fileTypeEnum, int id) {
         String basePath = new File(storageRootPath).getAbsolutePath();
         switch (fileTypeEnum) {
             case AVATAR:
-                return Paths.get(basePath, "avatar", String.valueOf(id)).toString();
+                return Paths.get(basePath, "avatar", String.valueOf(id)).normalize().toString();
             case PHOTO:
-                return Paths.get(basePath, "document", "photo", String.valueOf(id)).toString();
+                return Paths.get(basePath, "document", "photo", String.valueOf(id)).normalize().toString();
             case DOCUMENT:
-                return Paths.get(basePath, "document", String.valueOf(id)).toString();
+                return Paths.get(basePath, "document", String.valueOf(id)).normalize().toString();
             default:
                 throw new CommonException(ErrorCode.PARAMS_ERROR, "不支持的文件类型");
         }

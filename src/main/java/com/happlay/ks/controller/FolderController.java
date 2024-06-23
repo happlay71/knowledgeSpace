@@ -39,21 +39,21 @@ public class FolderController {
     @ApiOperation(value = "创建文件夹", notes = "需要用户登录，传入文件名，前端获取登录用户id，父文件夹id（无则不传）")
     public BaseResponse<String> createFolder(@RequestBody CreateFolderRequest cFolderRequest, HttpServletRequest request) {
         User loginUser = iUserService.getLoginUser(request);
-        return ResultUtils.success(iFolderService.createFolder(cFolderRequest, loginUser.getId()));
+        return ResultUtils.success(iFolderService.createFolder(cFolderRequest, loginUser));
     }
 
     @PostMapping("/update")
     @ApiOperation(value = "修改文件夹名", notes = "需要用户登录，传入文件id，新文件夹名")
     public BaseResponse<String> updateName(@RequestBody UpdateNameRequest updateNameRequest, HttpServletRequest request) {
         User loginUser = iUserService.getLoginUser(request);
-        return ResultUtils.success(iFolderService.updataName(updateNameRequest, loginUser.getId()));
+        return ResultUtils.success(iFolderService.updataName(updateNameRequest, loginUser));
     }
 
     @PostMapping("/delete/{id}")
     @ApiOperation(value = "删除文件夹", notes = "需要用户登录，传入待删除文件夹id")
     public BaseResponse<Boolean> deleteFolder(@PathVariable("id") Integer id, HttpServletRequest request) {
         User loginUser = iUserService.getLoginUser(request);
-        return ResultUtils.success(iFolderService.deleteById(id, loginUser.getId()));
+        return ResultUtils.success(iFolderService.deleteById(id, loginUser));
     }
 
     @GetMapping("/search")
@@ -62,4 +62,5 @@ public class FolderController {
         User loginUser = iUserService.getLoginUser(request);
         return ResultUtils.success(iFolderService.selectByUserId(loginUser.getId()));
     }
+
 }

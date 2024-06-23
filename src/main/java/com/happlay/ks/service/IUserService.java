@@ -35,6 +35,8 @@ public interface IUserService extends IService<User> {
 
     AvatarUploadVo uploadAvatar(MultipartFile file, Integer userId);
 
+    Boolean deleteAvatar(User loginUser);
+
     LoginUserVo createLoginUserVo(User user);
 
     LoginUserVo login(LoginUserRequest request);

@@ -14,8 +14,4 @@ import io.swagger.models.auth.In;
  */
 public interface IImagepathsService extends IService<Imagepaths> {
 
-    Boolean saveImageDate(Integer fileId, String imagePath);
-
-    Boolean deleteImage(Integer fileId);
-
 }

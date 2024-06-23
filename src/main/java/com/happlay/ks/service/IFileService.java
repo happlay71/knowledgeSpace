@@ -1,5 +1,8 @@
 package com.happlay.ks.service;
 
+import com.happlay.ks.model.dto.file.CreateFileRequest;
+import com.happlay.ks.model.dto.file.UpdateFileRequest;
+import com.happlay.ks.model.dto.file.UpdateNameRequest;
 import com.happlay.ks.model.dto.file.UploadFileRequest;
 import com.happlay.ks.model.entity.File;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -17,10 +20,18 @@ import java.util.Map;
  */
 public interface IFileService extends IService<File> {
 
-    String uploadFile(UploadFileRequest uploadFileRequest, Integer userId);
+    String uploadFile(UploadFileRequest uploadFileRequest, User user);
 
-    Boolean deleteFile(Integer id, Integer userId);
+    Boolean createMDFile(CreateFileRequest createFileRequest, User user);
 
-    Boolean deleteByFolder(Integer folderId, Integer userId);
+    Boolean deleteFile(Integer id, User user);
+
+    Boolean deleteByFolder(Integer folderId, User user);
+
+    String updateFileName(UpdateNameRequest updateNameRequest, User user);
+
+    String updateFile(UpdateFileRequest updateFileRequest, User user);
+
+    String selectFileContent(Integer fileId, User user);
 
 }

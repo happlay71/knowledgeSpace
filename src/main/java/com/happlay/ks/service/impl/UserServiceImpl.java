@@ -11,6 +11,7 @@ import com.happlay.ks.emums.FileTypeEnum;
 import com.happlay.ks.exception.CommonException;
 import com.happlay.ks.mapper.FileMapper;
 import com.happlay.ks.mapper.FolderMapper;
+import com.happlay.ks.model.dto.folder.CreateFolderRequest;
 import com.happlay.ks.model.dto.user.*;
 import com.happlay.ks.model.entity.Folder;
 import com.happlay.ks.model.entity.User;
@@ -23,6 +24,7 @@ import com.happlay.ks.service.IUserService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.happlay.ks.utils.file.FileUtils;
 import com.happlay.ks.utils.JwtUtils;
+import com.happlay.ks.utils.file.FolderUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.system.ApplicationHome;
 import org.springframework.stereotype.Service;
@@ -56,8 +58,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     @Value("${file.storage.root.path}")
     private String storageRootPath;
+
     @Resource
     FileUtils fileUtils;
+
+    @Resource
+    FolderUtils folderUtils;
 
     @Resource
     IFolderService iFolderService;
@@ -121,6 +127,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         user.setUsername(username);
         user.setPassword(request.getPassword());
         this.save(user);
+
+        // 创建根目录
+        CreateFolderRequest createFolderRequest = new CreateFolderRequest(0, username);
+        iFolderService.createFolder(createFolderRequest, user);
 
         return createLoginUserVo(user);
     }
@@ -192,6 +202,24 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         oldAvatar.setUpdateUser(userId);
         this.updateById(oldAvatar);
         return createUploadVo(oldAvatar);
+    }
+
+    @Override
+    public Boolean deleteAvatar(User loginUser) {
+        String avatarUrl = loginUser.getAvatarUrl();
+
+        if (avatarUrl != null) {
+            // 删除头像文件
+            fileUtils.deleteFileFromPath(avatarUrl);
+
+            // 删除头像文件夹
+            folderUtils.deleteFolderById(FileTypeEnum.AVATAR, loginUser.getId());
+
+            // 更新用户头像URL为null
+            loginUser.setAvatarUrl(null);
+        }
+
+        return true;
     }
 
     private String getStorageRootPath() {
@@ -306,11 +334,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
         // 执行删除操作
         // 1.头像删除
+        deleteAvatar(user);
         // 2.文件删除
         LambdaQueryWrapper<Folder> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Folder::getUserId, user.getId()).eq(Folder::getParentId, 0);
         Folder folder = iFolderService.getOne(queryWrapper);
-        iFolderService.deleteById(folder.getId(), user.getId());
+        iFolderService.deleteById(folder.getId(), user);
         // 3.用户数据删除
         boolean isRemoved = userMapper.deleteById(user.getId());
         if (!isRemoved) {
