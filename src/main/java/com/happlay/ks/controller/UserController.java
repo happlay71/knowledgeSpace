@@ -224,13 +224,15 @@ public class UserController {
         User loginUser = iUserService.getLoginUser(request);
         UserDetailsVo userDetailsVo;
 
-        if (GUEST.equals(loginUser.getRole())) {
-            // 访客只能查看有限的信息
-            userDetailsVo = iUserService.getUserDetailsById(id, false);
-        } else {
-            // 已登录用户可以查看详细信息
-            userDetailsVo = iUserService.getUserDetailsById(id, true);
-        }
+//        //暂时不禁止访客查看
+//        if (GUEST.equals(loginUser.getRole())) {
+//            // 访客只能查看有限的信息
+//            userDetailsVo = iUserService.getUserDetailsById(id, false);
+//        } else {
+//            // 已登录用户可以查看详细信息
+//            userDetailsVo = iUserService.getUserDetailsById(id, true);
+//        }
+        userDetailsVo = iUserService.getUserDetailsById(id, true);
 
         return ResultUtils.success(userDetailsVo);
     }

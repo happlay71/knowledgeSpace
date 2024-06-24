@@ -12,4 +12,5 @@ public class UpdateUserRequest {
     private String username;
     private String password;
     private String password2;
+    private String role;
 }

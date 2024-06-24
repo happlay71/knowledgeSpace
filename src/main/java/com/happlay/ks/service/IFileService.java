@@ -36,7 +36,7 @@ public interface IFileService extends IService<File> {
 
     String updateFile(UpdateFileRequest updateFileRequest, User user);
 
-    String selectFileContent(Integer fileId, User user);
+    Map<String, String> readFileContent(Integer fileId, User user);
 
 //    FolderDetailsVo convertToFolderDetailsVo(Folder folder, boolean isLoggedIn);
 

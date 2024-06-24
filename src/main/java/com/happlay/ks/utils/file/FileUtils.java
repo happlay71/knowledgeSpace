@@ -4,15 +4,21 @@ import com.happlay.ks.common.ErrorCode;
 import com.happlay.ks.config.FileConfig;
 import com.happlay.ks.emums.FileTypeEnum;
 import com.happlay.ks.exception.CommonException;
+import org.apache.poi.hwpf.HWPFDocument;
+import org.apache.poi.hwpf.converter.WordToHtmlConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
+import org.w3c.dom.Document;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.*;
@@ -118,6 +124,35 @@ public class FileUtils {
                 return Paths.get(basePath, "document", String.valueOf(id)).normalize().toString();
             default:
                 throw new CommonException(ErrorCode.PARAMS_ERROR, "不支持的文件类型");
+        }
+    }
+
+    // 获取文件后缀
+    public String getFileExtension(String fileName) {
+        if (fileName == null || fileName.isEmpty()) {
+            return "";
+        }
+        int dotIndex = fileName.lastIndexOf('.');
+        return (dotIndex == -1) ? "" : fileName.substring(dotIndex + 1);
+    }
+
+    // 将doc文件内容转换为html
+    public String convertDocToHtml(String filePath) throws IOException, ParserConfigurationException {
+        try (FileInputStream fis = new FileInputStream(filePath)) {
+            HWPFDocument document = new HWPFDocument(fis);
+            WordToHtmlConverter wordToHtmlConverter = new WordToHtmlConverter(
+                    DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
+            wordToHtmlConverter.processDocument(document);
+
+            Document htmlDocument = wordToHtmlConverter.getDocument();
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            TransformerFactory.newInstance().newTransformer().transform(
+                    new DOMSource(htmlDocument),
+                    new StreamResult(out)
+            );
+            return new String(out.toByteArray());
+        } catch (Exception e) {
+            throw new RuntimeException("Error converting .doc to HTML", e);
         }
     }
 

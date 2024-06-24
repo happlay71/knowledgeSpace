@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.HashSet;
+import java.util.Map;
 
 import static com.happlay.ks.constant.UserRoleConstant.*;
 
@@ -84,11 +85,8 @@ public class FileController {
 
     @GetMapping("/selectContent")
     @ApiOperation(value = "查看文件内容", notes = "传入查看文件的id")
-    public BaseResponse<String> selectFileContent(@RequestParam("id") Integer fileId, HttpServletRequest request) {
+    public BaseResponse<Map<String, String>> selectFileContent(@RequestParam("id") Integer fileId, HttpServletRequest request) {
         User loginUser = iUserService.getLoginUser(request);
-        return ResultUtils.success(iFileService.selectFileContent(fileId, loginUser));
+        return ResultUtils.success(iFileService.readFileContent(fileId, loginUser));
     }
-
-//    @GetMapping("/select")
-//    @ApiOperation(value = "查看文件", notes = "传入文件的id")
 }

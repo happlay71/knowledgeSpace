@@ -165,7 +165,8 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder> impleme
 
         // 递归删除文件夹及其子文件夹和文件
         folderUtils.deleteFolderById(FileTypeEnum.DOCUMENT, id);
-        return folderMapper.deleteById(id);
+        folderMapper.deleteById(id);
+        return true;
     }
 
     @Override

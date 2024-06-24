@@ -81,20 +81,25 @@ public class FolderController {
         User loginUser = iUserService.getLoginUser(request);
 
         FolderDetailsVo folderDetailsVo;
-        if (GUEST.equals(loginUser.getRole())) {
-            // 访客只能查看有限的信息
-            // 获取文件夹结构
-            folderDetailsVo = iFolderService.getFolderStructureByUserId(id);
-            // 获取文件内容
-            iFileService.addFilesToFolders(folderDetailsVo, false);
-        } else {
-            // 已登录用户可以查看详细信息
-            // 获取文件夹结构
-            folderDetailsVo = iFolderService.getFolderStructureByUserId(id);
-            // 获取文件内容
-            iFileService.addFilesToFolders(folderDetailsVo, true);
-        }
+//        //暂时不禁止访客查看
+//        if (GUEST.equals(loginUser.getRole())) {
+//            // 访客只能查看有限的信息
+//            // 获取文件夹结构
+//            folderDetailsVo = iFolderService.getFolderStructureByUserId(id);
+//            // 获取文件内容
+//            iFileService.addFilesToFolders(folderDetailsVo, false);
+//        } else {
+//            // 已登录用户可以查看详细信息
+//            // 获取文件夹结构
+//            folderDetailsVo = iFolderService.getFolderStructureByUserId(id);
+//            // 获取文件内容
+//            iFileService.addFilesToFolders(folderDetailsVo, true);
+//        }
 
+        // 获取文件夹结构
+        folderDetailsVo = iFolderService.getFolderStructureByUserId(id);
+        // 获取文件内容
+        iFileService.addFilesToFolders(folderDetailsVo, true);
         return ResultUtils.success(folderDetailsVo);
     }
 

@@ -165,6 +165,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     @Override
     public LoginUserVo setUserEmail(String email, User loginUser) {
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(User::getEmail, email);
+        if (this.getOne(wrapper) != null) {
+            throw new CommonException(ErrorCode.PARAMS_ERROR, "邮箱已被注册");
+        }
+
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(User::getId, loginUser.getId());
         User oldUser = this.getOne(queryWrapper);
@@ -380,11 +386,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         } else if (loginUser.getRole().equals(UserRoleConstant.USER_ADMIN)) {
             // 如果登录用户为管理员，则能修改普通用户信息
             if (!Objects.equals(loginUser.getId(), userUpdateRequest.getId())) {
-                if (oldUser.getRole().equals(UserRoleConstant.USER_ADMIN) || oldUser.getRole().equals(UserRoleConstant.ROOT)) {
+                if (oldUser.getRole().equals(UserRoleConstant.USER_ADMIN)
+                        || oldUser.getRole().equals(UserRoleConstant.ROOT)
+                        || userUpdateRequest.getRole().equals(UserRoleConstant.USER_ADMIN)) {
                     throw new CommonException(ErrorCode.NOT_AUTH_ERROR, "权限不足");
                 }
             }
         }
+
+        if (Objects.equals(userUpdateRequest.getRole(), UserRoleConstant.ROOT)) {
+            throw new CommonException(ErrorCode.PARAMS_ERROR, "不允许添加新的超级管理员");
+        } else if (userUpdateRequest.getRole() != null) {
+            oldUser.setRole(userUpdateRequest.getRole());
+        }
+
         oldUser.setUpdateUser(loginUser.getId());
         return this.updateById(oldUser);
     }

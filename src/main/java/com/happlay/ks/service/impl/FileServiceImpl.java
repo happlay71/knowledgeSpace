@@ -25,7 +25,8 @@ import com.happlay.ks.utils.file.FileUtils;
 import com.happlay.ks.utils.file.FolderUtils;
 import com.happlay.ks.utils.imagepaths.ImageUtils;
 import io.swagger.models.auth.In;
-//import org.apache.poi.hpsf.
+import org.apache.poi.hwpf.HWPFDocument;
+import org.apache.poi.hwpf.converter.WordToHtmlConverter;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -127,6 +128,10 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements IF
                 File newFile = save(folderId, user.getId(), name, fileType);
                 newFile.setPath(relativePath);
                 this.updateById(newFile);
+
+                // 创建本地对应的图片文件夹
+                folderUtils.createFolderFromPath(FileTypeEnum.PHOTO, newFile.getId());
+
                 System.out.println("文件信息保存到数据库，路径：" + relativePath);
                 path = relativePath;
             }
@@ -255,7 +260,6 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements IF
     @Override
     public String updateFile(UpdateFileRequest updateFileRequest, User user) {
         // 检查文件夹是否存在并属于当前用户
-
         // 1.查找对应文件
         LambdaQueryWrapper<File> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(File::getId, updateFileRequest.getId());
@@ -290,7 +294,9 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements IF
     }
 
     @Override
-    public String selectFileContent(Integer fileId, User user) {
+    public Map<String, String> readFileContent(Integer fileId, User user) {
+        // 创建一个 Map 来返回内容和文件类型
+        Map<String, String> result = new HashMap<>();
         // 1.获取文件路径
         LambdaQueryWrapper<File> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(File::getId, fileId);
@@ -304,30 +310,32 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements IF
         String fileName = getFileNameFromPath(file.getPath());
         String path = fileUtils.getFolderPath(FileTypeEnum.DOCUMENT, file.getFolderId()) + fileName;
         System.out.println(path);
-        // 2.从路径中读取文件内容
-        String content = readFileContent(path);
-        // 3.返回文件内容
-        return content;
-    }
 
-//    public String convertDocToHtml(String filePath) throws IOException, ParserConfigurationException {
-//        try (FileInputStream fis = new FileInputStream(filePath)) {
-//            HWPFDocument document = new HWPFDocument(fis);
-//            WordToHtmlConverter wordToHtmlConverter = new WordToHtmlConverter(
-//                    DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
-//            wordToHtmlConverter.processDocument(document);
-//
-//            Document htmlDocument = wordToHtmlConverter.getDocument();
-//            ByteArrayOutputStream out = new ByteArrayOutputStream();
-//            TransformerFactory.newInstance().newTransformer().transform(
-//                    new DOMSource(htmlDocument),
-//                    new StreamResult(out)
-//            );
-//            return new String(out.toByteArray());
-//        } catch (Exception e) {
-//            throw new RuntimeException("Error converting .doc to HTML", e);
-//        }
-//    }
+        // 2.检查文件类型并读取文件内容
+        String content;
+        String fileExtension = fileUtils.getFileExtension(fileName);
+
+        switch (fileExtension.toLowerCase()) {
+            case "md":
+                content = readFileContent(path);
+                break;
+            case "doc":
+            case "docx":
+                try {
+                    content = fileUtils.convertDocToHtml(path);
+                } catch (IOException | ParserConfigurationException e) {
+                    throw new CommonException(ErrorCode.PARAMS_ERROR, "文件读取失败");
+                }
+                break;
+            default:
+                throw new CommonException(ErrorCode.PARAMS_ERROR, "不支持读取该类型文件");
+        }
+
+        // 3.返回文件内容和类型
+        result.put("content", content);
+        result.put("fileType", fileExtension.toLowerCase());
+        return result;
+    }
 
     @Override
     public List<FileDetailsVo> getFilesByFolderId(Integer folderId, boolean isLoggedIn) {
@@ -379,7 +387,8 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements IF
         System.out.println("开始处理 Markdown 文件");
 
         // 提取图片路径
-        List<String> imagePaths = fileImageUtils.extractImagePathsFromMD(fileBytes);
+        List<String> imagePaths;
+        imagePaths = fileImageUtils.extractImagePathsFromMD(fileBytes);
         System.out.println("提取的图片路径：" + imagePaths);
 
         File newFile = save(folderId, userId, name, fileType);
