@@ -5,6 +5,7 @@ import com.happlay.ks.model.dto.folder.UpdateNameRequest;
 import com.happlay.ks.model.entity.Folder;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.happlay.ks.model.entity.User;
+import com.happlay.ks.model.vo.folder.FolderDetailsVo;
 import com.happlay.ks.model.vo.folder.FolderVo;
 
 import java.util.List;
@@ -28,4 +29,6 @@ public interface IFolderService extends IService<Folder> {
     Boolean deleteById(Integer id, User user);
 
     List<FolderVo> selectByUserId(Integer id);
+
+    FolderDetailsVo getFolderStructureByUserId(Integer userId);
 }

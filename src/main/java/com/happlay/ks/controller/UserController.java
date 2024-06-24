@@ -14,6 +14,7 @@ import com.happlay.ks.model.dto.user.*;
 import com.happlay.ks.model.entity.User;
 import com.happlay.ks.model.vo.user.AvatarUploadVo;
 import com.happlay.ks.model.vo.user.LoginUserVo;
+import com.happlay.ks.model.vo.user.UserDetailsVo;
 import com.happlay.ks.model.vo.user.UserVo;
 import com.happlay.ks.service.IUserService;
 import com.happlay.ks.service.email.VerificationService;
@@ -197,9 +198,25 @@ public class UserController {
         return ResultUtils.success(userVoPage);
     }
 
-//    // 根据id查询--还得包括该用户的文件夹及文件
 //    @GetMapping("/select/{id}")
-//    public BaseResponse<User> selectById(@RequestParam("id") Integer id) {
-//
+//    @ApiOperation(value = "根据id查询--包括该用户的文件夹及文件", notes = "前端传入用户id")
+//    public BaseResponse<UserDetailsVo> selectById(@RequestParam("id") Integer id) {
+//        return ResultUtils.success(iUserService.selectDetailsById(id));
 //    }
+
+    @GetMapping("/select/me")
+    @LoginCheck(mustRole = {UserRoleConstant.ROOT, UserRoleConstant.USER_ADMIN, UserRoleConstant.USER})
+    @ApiOperation(value = "登陆后查看自己的文件", notes = "需要用户登录")
+    public BaseResponse<UserDetailsVo> selectMe(HttpServletRequest request) {
+        User loginUser = iUserService.getLoginUser(request);
+        UserDetailsVo userDetailsVo = iUserService.getUserDetailsById(loginUser.getId(), true);
+        return ResultUtils.success(userDetailsVo);
+    }
+
+    @GetMapping("/select/{id}")
+    @ApiOperation(value = "根据用户ID查询文件夹及文件结构", notes = "前端传入用户ID")
+    public BaseResponse<UserDetailsVo> selectById(@PathVariable("id") Integer id, @RequestParam("isLoggedIn") boolean isLoggedIn) {
+        UserDetailsVo userDetailsVo = iUserService.getUserDetailsById(id, isLoggedIn);
+        return ResultUtils.success(userDetailsVo);
+    }
 }

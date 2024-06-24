@@ -75,11 +75,14 @@ public class FileController {
         return ResultUtils.success(iFileService.deleteFile(id, loginUser));
     }
 
-    @GetMapping("/select")
-    @LoginCheck(mustRole = {UserRoleConstant.USER_ADMIN, UserRoleConstant.ROOT, UserRoleConstant.USER})
+    @GetMapping("/selectContent")
+//    @LoginCheck(mustRole = {UserRoleConstant.USER_ADMIN, UserRoleConstant.ROOT, UserRoleConstant.USER})
     @ApiOperation(value = "查看文件内容", notes = "传入查看文件的id")
     public BaseResponse<String> selectFileContent(@RequestParam("id") Integer fileId, HttpServletRequest request) {
         User loginUser = iUserService.getLoginUser(request);
         return ResultUtils.success(iFileService.selectFileContent(fileId, loginUser));
     }
+
+//    @GetMapping("/select")
+//    @ApiOperation(value = "查看文件", notes = "传入文件的id")
 }

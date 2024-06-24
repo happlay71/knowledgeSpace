@@ -13,6 +13,7 @@ import com.happlay.ks.model.dto.folder.UpdateNameRequest;
 import com.happlay.ks.model.entity.Folder;
 import com.happlay.ks.mapper.FolderMapper;
 import com.happlay.ks.model.entity.User;
+import com.happlay.ks.model.vo.folder.FolderDetailsVo;
 import com.happlay.ks.model.vo.folder.FolderVo;
 import com.happlay.ks.service.IFileService;
 import com.happlay.ks.service.IFolderService;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -43,6 +45,9 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder> impleme
 
     @Resource
     FolderUtils folderUtils;
+
+    @Resource
+    IFileService iFileService;
 
     @Resource
     FolderMapper folderMapper;
@@ -158,28 +163,9 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder> impleme
         }
 
         // 递归删除文件夹及其子文件夹和文件
-//        deleteFolderRecursively(id, userId);
         folderUtils.deleteFolderById(FileTypeEnum.DOCUMENT, id);
         return folderMapper.deleteById(id);
     }
-
-//    private void deleteFolderRecursively(Integer folderId, Integer userId) {
-//        // 查询文件夹下的所有子文件夹
-//        LambdaQueryWrapper<Folder> folderQueryWrapper = new LambdaQueryWrapper<>();
-//        folderQueryWrapper.eq(Folder::getParentId, folderId);
-//        List<Folder> subFolders = this.list(folderQueryWrapper);
-//
-//        // 删除子文件夹及其内容
-//        for (Folder subFolder : subFolders) {
-//            deleteFolderRecursively(subFolder.getId(), userId);
-//        }
-//
-//        // 删除当前文件夹下的所有文件
-//        iFileService.deleteByFolder(folderId, userId);
-//
-//        // 删除当前文件夹---数据库
-//        folderMapper.deleteById(folderId);
-//    }
 
     @Override
     public List<FolderVo> selectByUserId(Integer id) {
@@ -194,5 +180,31 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder> impleme
             return folderVo;
         }).collect(Collectors.toList());
         return folderVos;
+    }
+
+    @Override
+    public FolderDetailsVo getFolderStructureByUserId(Integer userId) {
+        LambdaQueryWrapper<Folder> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Folder::getUserId, userId).eq(Folder::getParentId, 0);
+        Folder rootFolder = this.getOne(queryWrapper);
+        if (rootFolder == null) {
+            throw new CommonException(ErrorCode.NOT_FOUND_ERROR, "根目录不存在");
+        }
+        return buildFolderStructure(rootFolder);
+    }
+
+    private FolderDetailsVo buildFolderStructure(Folder folder) {
+        FolderDetailsVo folderDetailsVo = new FolderDetailsVo();
+        folderDetailsVo.setId(folder.getId());
+        folderDetailsVo.setName(folder.getName());
+
+        List<Folder> subFolders = folderMapper.getSubFoldersByParentId(folder.getId());
+        List<FolderDetailsVo> subFolderDetailsVos = new ArrayList<>();
+        for (Folder subFolder : subFolders) {
+            subFolderDetailsVos.add(buildFolderStructure(subFolder));
+        }
+        folderDetailsVo.setSubFolders(subFolderDetailsVos);
+
+        return folderDetailsVo;
     }
 }

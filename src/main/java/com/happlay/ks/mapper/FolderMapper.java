@@ -22,15 +22,13 @@ public interface FolderMapper extends BaseMapper<Folder> {
     @Select("SELECT COUNT(*) FROM folder WHERE id = #{folderId} AND user_id = #{userId}")
     int countFolderBelongsToUser(@Param("folderId") Integer folderId, @Param("userId") Integer userId);
 
-    @Select("SELECT id FROM Folder WHERE parent_id = #{parentId}")
-    List<Integer> getSubfolderIds(Integer parentId);
+    @Select("SELECT id FROM folder WHERE parent_id = #{parentId}")
+    List<Integer> getSubfolderIds(@Param("parentId") Integer parentId);
+
+    @Select("SELECT * FROM folder WHERE parent_id = #{parentId}")
+    List<Folder> getSubFoldersByParentId(@Param("parentId") Integer parentId);
 
     @Delete("DELETE FROM folder WHERE id = #{id}")
     Boolean deleteById(@Param("id") Integer id);
 
-    @Delete("DELETE FROM folder WHERE parent_id = #{parentId}")
-    Boolean deleteByParentId(@Param("parentId") Integer parentId);
-
-    @Delete("DELETE FROM folder WHERE user_id = #{userId}")
-    Boolean deleteByUserId(@Param("userId") Integer userId);
 }

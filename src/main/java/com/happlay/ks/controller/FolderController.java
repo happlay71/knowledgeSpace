@@ -6,7 +6,10 @@ import com.happlay.ks.common.ResultUtils;
 import com.happlay.ks.model.dto.folder.CreateFolderRequest;
 import com.happlay.ks.model.dto.folder.UpdateNameRequest;
 import com.happlay.ks.model.entity.User;
+import com.happlay.ks.model.vo.file.FileDetailsVo;
+import com.happlay.ks.model.vo.folder.FolderDetailsVo;
 import com.happlay.ks.model.vo.folder.FolderVo;
+import com.happlay.ks.service.IFileService;
 import com.happlay.ks.service.IFolderService;
 import com.happlay.ks.service.IUserService;
 import io.swagger.annotations.ApiOperation;
@@ -34,6 +37,9 @@ public class FolderController {
 
     @Resource
     IFolderService iFolderService;
+
+    @Resource
+    IFileService iFileService;
 
     @PostMapping("/create")
     @ApiOperation(value = "创建文件夹", notes = "需要用户登录，传入文件名，前端获取登录用户id，父文件夹id（无则不传）")
@@ -63,4 +69,21 @@ public class FolderController {
         return ResultUtils.success(iFolderService.selectByUserId(loginUser.getId()));
     }
 
+    @GetMapping("/select/{id}")
+    @ApiOperation(value = "根据用户ID查询文件夹及文件结构", notes = "前端传入用户ID")
+    public BaseResponse<FolderDetailsVo> selectById(@PathVariable("id") Integer id, @RequestParam("isLoggedIn") boolean isLoggedIn) {
+        // 获取文件夹结构
+        FolderDetailsVo folderDetailsVo = iFolderService.getFolderStructureByUserId(id);
+        // 获取文件内容
+        addFilesToFolders(folderDetailsVo, isLoggedIn);
+        return ResultUtils.success(folderDetailsVo);
+    }
+
+    private void addFilesToFolders(FolderDetailsVo folderDetailsVo, boolean isLoggedIn) {
+        List<FileDetailsVo> files = iFileService.getFilesByFolderId(folderDetailsVo.getId(), isLoggedIn);
+        folderDetailsVo.setFiles(files);
+        for (FolderDetailsVo subFolder : folderDetailsVo.getSubFolders()) {
+            addFilesToFolders(subFolder, isLoggedIn);
+        }
+    }
 }

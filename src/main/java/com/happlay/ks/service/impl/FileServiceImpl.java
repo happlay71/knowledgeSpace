@@ -14,6 +14,8 @@ import com.happlay.ks.model.entity.File;
 import com.happlay.ks.mapper.FileMapper;
 import com.happlay.ks.model.entity.Folder;
 import com.happlay.ks.model.entity.User;
+import com.happlay.ks.model.vo.file.FileDetailsVo;
+import com.happlay.ks.model.vo.folder.FolderDetailsVo;
 import com.happlay.ks.service.IFileService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.happlay.ks.service.IFolderService;
@@ -33,10 +35,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * <p>
@@ -300,6 +299,21 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements IF
         String content = readFileContent(path);
         // 3.返回文件内容
         return content;
+    }
+
+    @Override
+    public List<FileDetailsVo> getFilesByFolderId(Integer folderId, boolean isLoggedIn) {
+        List<File> files = fileMapper.getFilesByFolderId(folderId);
+        List<FileDetailsVo> fileDetailsVos = new ArrayList<>();
+        for (File file : files) {
+            FileDetailsVo fileDetailsVo = new FileDetailsVo();
+            fileDetailsVo.setId(file.getId());
+            fileDetailsVo.setName(file.getName());
+            fileDetailsVo.setPath(isLoggedIn ? file.getPath() : null);
+            fileDetailsVo.setFileType(file.getFileType());
+            fileDetailsVos.add(fileDetailsVo);
+        }
+        return fileDetailsVos;
     }
 
     // 从文件路径中获取文件名

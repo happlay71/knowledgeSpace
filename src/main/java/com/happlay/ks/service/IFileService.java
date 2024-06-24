@@ -6,8 +6,12 @@ import com.happlay.ks.model.dto.file.UpdateNameRequest;
 import com.happlay.ks.model.dto.file.UploadFileRequest;
 import com.happlay.ks.model.entity.File;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.happlay.ks.model.entity.Folder;
 import com.happlay.ks.model.entity.User;
+import com.happlay.ks.model.vo.file.FileDetailsVo;
+import com.happlay.ks.model.vo.folder.FolderDetailsVo;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -34,4 +38,7 @@ public interface IFileService extends IService<File> {
 
     String selectFileContent(Integer fileId, User user);
 
+//    FolderDetailsVo convertToFolderDetailsVo(Folder folder, boolean isLoggedIn);
+
+    List<FileDetailsVo> getFilesByFolderId(Integer folderId, boolean isLoggedIn);
 }

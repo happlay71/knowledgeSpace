@@ -7,6 +7,7 @@ import com.happlay.ks.model.entity.User;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.happlay.ks.model.vo.user.AvatarUploadVo;
 import com.happlay.ks.model.vo.user.LoginUserVo;
+import com.happlay.ks.model.vo.user.UserDetailsVo;
 import com.happlay.ks.model.vo.user.UserVo;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -56,5 +57,7 @@ public interface IUserService extends IService<User> {
     Page<UserVo> selectPage(PageRequest pageRequest);
 
     Page<UserVo> selectName(String name, PageRequest pageRequest);
+
+    UserDetailsVo getUserDetailsById(Integer userId, boolean isLoggedIn);
 
 }

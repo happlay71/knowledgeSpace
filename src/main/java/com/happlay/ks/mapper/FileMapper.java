@@ -5,6 +5,9 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+
+import java.util.List;
 
 /**
  * <p>
@@ -18,10 +21,7 @@ public interface FileMapper extends BaseMapper<File> {
 
     @Delete("DELETE FROM file WHERE id = #{id}")
     Boolean deleteById(@Param("id") Integer id);
-//
-//    @Delete("DELETE FROM file WHERE folder_id = #{folderId}")
-//    Boolean deleteByFolderId(@Param("folderId") Integer folderId);
-//
-//    @Delete("DELETE FROM file WHERE user_id = #{userId}")
-//    Boolean deleteByUserId(@Param("userId") Integer userId);
+
+    @Select("SELECT * FROM file WHERE folder_id = #{folderId}")
+    List<File> getFilesByFolderId(@Param("folderId") Integer folderId);
 }

@@ -16,9 +16,13 @@ import com.happlay.ks.model.dto.user.*;
 import com.happlay.ks.model.entity.Folder;
 import com.happlay.ks.model.entity.User;
 import com.happlay.ks.mapper.UserMapper;
+import com.happlay.ks.model.vo.file.FileDetailsVo;
+import com.happlay.ks.model.vo.folder.FolderDetailsVo;
 import com.happlay.ks.model.vo.user.AvatarUploadVo;
 import com.happlay.ks.model.vo.user.LoginUserVo;
+import com.happlay.ks.model.vo.user.UserDetailsVo;
 import com.happlay.ks.model.vo.user.UserVo;
+import com.happlay.ks.service.IFileService;
 import com.happlay.ks.service.IFolderService;
 import com.happlay.ks.service.IUserService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -67,6 +71,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     @Resource
     IFolderService iFolderService;
+
+    @Resource
+    IFileService iFileService;
 
     @Resource
     UserMapper userMapper;
@@ -442,5 +449,31 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
         userVoPage.setRecords(list);
         return userVoPage;
+    }
+
+    public UserDetailsVo getUserDetailsById(Integer userId, boolean isLoggedIn) {
+        User user = this.getById(userId);
+        if (user == null) {
+            throw new CommonException(ErrorCode.NOT_FOUND_ERROR, "用户不存在");
+        }
+        UserDetailsVo userDetailsVo = new UserDetailsVo();
+        userDetailsVo.setId(user.getId());
+        userDetailsVo.setUsername(user.getUsername());
+        userDetailsVo.setRole(user.getRole());
+
+        FolderDetailsVo folderDetailsVo = iFolderService.getFolderStructureByUserId(userId);
+        addFilesToFolders(folderDetailsVo, isLoggedIn);
+
+        userDetailsVo.setFolders(folderDetailsVo);
+
+        return userDetailsVo;
+    }
+
+    private void addFilesToFolders(FolderDetailsVo folderDetailsVo, boolean isLoggedIn) {
+        List<FileDetailsVo> files = iFileService.getFilesByFolderId(folderDetailsVo.getId(), isLoggedIn);
+        folderDetailsVo.setFiles(files);
+        for (FolderDetailsVo subFolder : folderDetailsVo.getSubFolders()) {
+            addFilesToFolders(subFolder, isLoggedIn);
+        }
     }
 }
