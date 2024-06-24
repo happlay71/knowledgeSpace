@@ -29,6 +29,8 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 
+import static com.happlay.ks.constant.UserRoleConstant.*;
+
 /**
  * <p>
  * 用户表 前端控制器
@@ -47,6 +49,7 @@ public class UserController {
     VerificationService verificationService;
 
     @PostMapping("/sendVerificationEmailForSetEmail")
+    @LoginCheck(mustRole = {ROOT, USER_ADMIN, USER})
     @ApiOperation(value = "发送邮件（设置邮箱）", notes = "传入邮箱账号")
     public BaseResponse<String> sendVerificationEmailForSetEmail(@RequestParam("email") String email, HttpServletRequest request) {
         iUserService.getLoginUser(request);
@@ -55,6 +58,7 @@ public class UserController {
     }
 
     @PostMapping("/sendVerificationEmailForResetPassword")
+    @LoginCheck(mustRole = {ROOT, USER_ADMIN, USER})
     @ApiOperation(value = "发送邮件（重置密码）", notes = "传入邮箱账号")
     public BaseResponse<String> sendVerificationEmailForResetPassword(@RequestParam("email") String email) {
         verificationService.sendVerificationEmail(email);
@@ -62,6 +66,7 @@ public class UserController {
     }
 
     @PostMapping("/verifyCode")
+    @LoginCheck(mustRole = {ROOT, USER_ADMIN, USER})
     @ApiOperation(value = "验证邮箱信息", notes = "传入对应的邮箱(前端传入)和验证码, 生成Token")
     public BaseResponse<String> verifyCode(VerifyCodeRequest verifyCodeRequest) {
 
@@ -76,6 +81,7 @@ public class UserController {
     }
 
     @PostMapping("/setEmail")
+    @LoginCheck(mustRole = {ROOT, USER_ADMIN, USER})
     @ApiOperation(value = "设置邮箱", notes = "传入邮箱, emailToken 通过请求头传递")
     public BaseResponse<LoginUserVo> setEmail(@RequestParam("email") String email,
                                               @RequestHeader("emailToken") String emailToken,
@@ -90,7 +96,7 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    @ApiOperation(value = "登录", notes = "传入用户名，密码")
+    @ApiOperation(value = "登录(访客）", notes = "传入用户名，密码")
     public BaseResponse<LoginUserVo> login(@RequestBody LoginUserRequest request) {
         return ResultUtils.success(iUserService.login(request));
     }
@@ -108,6 +114,7 @@ public class UserController {
     }
 
     @PostMapping("/setAvatar")
+    @LoginCheck(mustRole = {ROOT, USER_ADMIN, USER})
     @ApiOperation(value = "上传头像", notes = "上传图片大小不大于10MB")
     public BaseResponse<AvatarUploadVo> setAvatar(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
         User loginUser = iUserService.getLoginUser(request);
@@ -125,6 +132,7 @@ public class UserController {
 
     // 删除头像
     @PostMapping("/delAvatar")
+    @LoginCheck(mustRole = {ROOT, USER_ADMIN, USER})
     @ApiOperation(value = "删除头像", notes = "需要用户登录")
     public BaseResponse<Boolean> delAvatar(HttpServletRequest request) {
         User loginUser = iUserService.getLoginUser(request);
@@ -140,6 +148,7 @@ public class UserController {
     }
 
     @PostMapping("/delete/me")
+    @LoginCheck(mustRole = {ROOT, USER_ADMIN, USER})
     @ApiOperation(value = "删除用户(自己)", notes = "需登录")
     public BaseResponse<Boolean> deleteMe(HttpServletRequest request) {
         User loginUser = iUserService.getLoginUser(request);
@@ -156,6 +165,7 @@ public class UserController {
     }
 
     @PostMapping("/resetPassword")
+    @LoginCheck(mustRole = {ROOT, USER_ADMIN, USER})
     @ApiOperation(value = "重置密码", notes = "验证完邮箱后，传入密码，二次密码")
     public BaseResponse<Boolean> resetPassword(@RequestHeader("emailToken") String emailToken,
                                                ResetUserPasswordRequest resetRequest) {
@@ -164,6 +174,7 @@ public class UserController {
     }
 
     @PostMapping("/update/me")
+    @LoginCheck(mustRole = {ROOT, USER_ADMIN, USER})
     @ApiOperation(value = "用户修改姓名密码", notes = "传入新用户名，密码，确认密码，需要用户登录")
     public BaseResponse<Boolean> updateMe(@RequestBody UpdateUserRequest updateUserRequest, HttpServletRequest request) {
         User loginUser = iUserService.getLoginUser(request);
@@ -198,12 +209,6 @@ public class UserController {
         return ResultUtils.success(userVoPage);
     }
 
-//    @GetMapping("/select/{id}")
-//    @ApiOperation(value = "根据id查询--包括该用户的文件夹及文件", notes = "前端传入用户id")
-//    public BaseResponse<UserDetailsVo> selectById(@RequestParam("id") Integer id) {
-//        return ResultUtils.success(iUserService.selectDetailsById(id));
-//    }
-
     @GetMapping("/select/me")
     @LoginCheck(mustRole = {UserRoleConstant.ROOT, UserRoleConstant.USER_ADMIN, UserRoleConstant.USER})
     @ApiOperation(value = "登陆后查看自己的文件", notes = "需要用户登录")
@@ -214,9 +219,20 @@ public class UserController {
     }
 
     @GetMapping("/select/{id}")
-    @ApiOperation(value = "根据用户ID查询文件夹及文件结构", notes = "前端传入用户ID")
-    public BaseResponse<UserDetailsVo> selectById(@PathVariable("id") Integer id, @RequestParam("isLoggedIn") boolean isLoggedIn) {
-        UserDetailsVo userDetailsVo = iUserService.getUserDetailsById(id, isLoggedIn);
+    @ApiOperation(value = "根据用户ID查询（登录/访客）", notes = "前端传入用户ID")
+    public BaseResponse<UserDetailsVo> selectByIdUser(@PathVariable("id") Integer id, HttpServletRequest request) {
+        User loginUser = iUserService.getLoginUser(request);
+        UserDetailsVo userDetailsVo;
+
+        if (GUEST.equals(loginUser.getRole())) {
+            // 访客只能查看有限的信息
+            userDetailsVo = iUserService.getUserDetailsById(id, false);
+        } else {
+            // 已登录用户可以查看详细信息
+            userDetailsVo = iUserService.getUserDetailsById(id, true);
+        }
+
         return ResultUtils.success(userDetailsVo);
     }
+
 }

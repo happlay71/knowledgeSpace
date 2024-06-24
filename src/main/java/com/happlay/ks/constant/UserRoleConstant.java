@@ -7,6 +7,8 @@ public class UserRoleConstant {
     public static final String USER_ADMIN = "USER_ADMIN";
     // 普通用户
     public static final String USER = "USER";
+    // 访客
+    public static final String GUEST = "GUEST";
 
     public static boolean canManageNotes(String role){
         return role != null && (role.equals(ROOT) || role.equals(USER_ADMIN));
@@ -18,6 +20,10 @@ public class UserRoleConstant {
 
     public static boolean canManageOwnNotes(String role){
         return role != null && (role.equals(ROOT) || role.equals(USER_ADMIN) || role.equals(USER));
+    }
+
+    public static boolean canNotManageNotes(String role) {
+        return role != null && role.equals(GUEST);
     }
 
     public static boolean isValidRole(String role){

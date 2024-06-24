@@ -5,7 +5,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Target(ElementType.METHOD)
+@Target({ElementType.LOCAL_VARIABLE, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface LoginCheck {
     // 必须为其中的某个角色

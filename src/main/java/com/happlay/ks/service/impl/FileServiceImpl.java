@@ -25,12 +25,21 @@ import com.happlay.ks.utils.file.FileUtils;
 import com.happlay.ks.utils.file.FolderUtils;
 import com.happlay.ks.utils.imagepaths.ImageUtils;
 import io.swagger.models.auth.In;
+//import org.apache.poi.hpsf.
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.w3c.dom.Document;
 
 import javax.annotation.Resource;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -301,6 +310,25 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements IF
         return content;
     }
 
+//    public String convertDocToHtml(String filePath) throws IOException, ParserConfigurationException {
+//        try (FileInputStream fis = new FileInputStream(filePath)) {
+//            HWPFDocument document = new HWPFDocument(fis);
+//            WordToHtmlConverter wordToHtmlConverter = new WordToHtmlConverter(
+//                    DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
+//            wordToHtmlConverter.processDocument(document);
+//
+//            Document htmlDocument = wordToHtmlConverter.getDocument();
+//            ByteArrayOutputStream out = new ByteArrayOutputStream();
+//            TransformerFactory.newInstance().newTransformer().transform(
+//                    new DOMSource(htmlDocument),
+//                    new StreamResult(out)
+//            );
+//            return new String(out.toByteArray());
+//        } catch (Exception e) {
+//            throw new RuntimeException("Error converting .doc to HTML", e);
+//        }
+//    }
+
     @Override
     public List<FileDetailsVo> getFilesByFolderId(Integer folderId, boolean isLoggedIn) {
         List<File> files = fileMapper.getFilesByFolderId(folderId);
@@ -314,6 +342,14 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements IF
             fileDetailsVos.add(fileDetailsVo);
         }
         return fileDetailsVos;
+    }
+
+    public void addFilesToFolders(FolderDetailsVo folderDetailsVo, boolean isLoggedIn) {
+        List<FileDetailsVo> files = this.getFilesByFolderId(folderDetailsVo.getId(), isLoggedIn);
+        folderDetailsVo.setFiles(files);
+        for (FolderDetailsVo subFolder : folderDetailsVo.getSubFolders()) {
+            addFilesToFolders(subFolder, isLoggedIn);
+        }
     }
 
     // 从文件路径中获取文件名

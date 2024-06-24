@@ -19,6 +19,8 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.HashSet;
 
+import static com.happlay.ks.constant.UserRoleConstant.*;
+
 /**
  * <p>
  * 文件表 前端控制器
@@ -38,6 +40,7 @@ public class FileController {
     IFileService iFileService;
 
     @PostMapping("/upload")
+    @LoginCheck(mustRole = {ROOT, USER_ADMIN, USER})
     @ApiOperation(value = "上传文件", notes = "需要用户登录，传入文件，文件名")
     public BaseResponse<String> uploadFile(@ModelAttribute UploadFileRequest uploadFileRequest, HttpServletRequest request) {
         User loginUser = iUserService.getLoginUser(request);
@@ -46,6 +49,7 @@ public class FileController {
     }
 
     @PostMapping("/createMD")
+    @LoginCheck(mustRole = {ROOT, USER_ADMIN, USER})
     @ApiOperation(value = "创建md文档", notes = "需要用户登录，传入文件内容，文件名，文件夹id")
     public BaseResponse<Boolean> createMDFile(@RequestBody CreateFileRequest createFileRequest, HttpServletRequest request) {
         User loginUser = iUserService.getLoginUser(request);
@@ -54,6 +58,7 @@ public class FileController {
 
     // 修改文件名
     @PostMapping("/updateName")
+    @LoginCheck(mustRole = {ROOT, USER_ADMIN, USER})
     @ApiOperation(value = "修改文件名", notes = "需要用户登录，传入待修改的文件id、新文件名")
     public BaseResponse<String> updateFileName(@RequestBody UpdateNameRequest updateNameRequest, HttpServletRequest request) {
         User loginUser = iUserService.getLoginUser(request);
@@ -61,6 +66,7 @@ public class FileController {
     }
 
     @PostMapping("/updateContent")
+    @LoginCheck(mustRole = {ROOT, USER_ADMIN, USER})
     @ApiOperation(value = "修改文件内容", notes = "需要用户登录，传入待修改的文件id、文件内容")
     public BaseResponse<String> updateFile(@RequestBody UpdateFileRequest updateFileRequest, HttpServletRequest request) {
         User loginUser = iUserService.getLoginUser(request);
@@ -69,6 +75,7 @@ public class FileController {
 
     // 删除文件
     @PostMapping("/delete")
+    @LoginCheck(mustRole = {ROOT, USER_ADMIN, USER})
     @ApiOperation(value = "删除文件", notes = "需要用户登录，传入待删除文件的id")
     public BaseResponse<Boolean> deleteFile(@RequestParam("id") Integer id, HttpServletRequest request) {
         User loginUser = iUserService.getLoginUser(request);
@@ -76,7 +83,6 @@ public class FileController {
     }
 
     @GetMapping("/selectContent")
-//    @LoginCheck(mustRole = {UserRoleConstant.USER_ADMIN, UserRoleConstant.ROOT, UserRoleConstant.USER})
     @ApiOperation(value = "查看文件内容", notes = "传入查看文件的id")
     public BaseResponse<String> selectFileContent(@RequestParam("id") Integer fileId, HttpServletRequest request) {
         User loginUser = iUserService.getLoginUser(request);

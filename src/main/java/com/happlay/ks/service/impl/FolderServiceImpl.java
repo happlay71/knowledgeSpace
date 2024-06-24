@@ -13,6 +13,7 @@ import com.happlay.ks.model.dto.folder.UpdateNameRequest;
 import com.happlay.ks.model.entity.Folder;
 import com.happlay.ks.mapper.FolderMapper;
 import com.happlay.ks.model.entity.User;
+import com.happlay.ks.model.vo.file.FileDetailsVo;
 import com.happlay.ks.model.vo.folder.FolderDetailsVo;
 import com.happlay.ks.model.vo.folder.FolderVo;
 import com.happlay.ks.service.IFileService;
@@ -207,4 +208,6 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder> impleme
 
         return folderDetailsVo;
     }
+
+
 }

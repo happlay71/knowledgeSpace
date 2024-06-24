@@ -41,4 +41,6 @@ public interface IFileService extends IService<File> {
 //    FolderDetailsVo convertToFolderDetailsVo(Folder folder, boolean isLoggedIn);
 
     List<FileDetailsVo> getFilesByFolderId(Integer folderId, boolean isLoggedIn);
+
+    void addFilesToFolders(FolderDetailsVo folderDetailsVo, boolean isLoggedIn);
 }

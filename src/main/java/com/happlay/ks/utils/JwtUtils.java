@@ -16,6 +16,7 @@ import java.util.Date;
 public class JwtUtils {
 
     private static final long USER_EXP = 60*60*24L;  // 用户token有效期
+    private static final long GUEST_EXP = 60*60*3L;  // 访客token有效期 3小时
     private static final long EMAIL_EXP = 600L;  // 用户token有效期
 
     /**
@@ -30,7 +31,7 @@ public class JwtUtils {
      * jti(JWT ID)：是JWT的唯一标识。
      * @return
      */
-    public static String createUserToken(Integer userId) {
+    public static String createUserToken(Integer userId, String role) {
         SecureDigestAlgorithm<SecretKey, SecretKey> algorithm = Jwts.SIG.HS256;
         long expMillis = System.currentTimeMillis() + 1000L * USER_EXP;
         Date exp = new Date(expMillis);
@@ -40,6 +41,7 @@ public class JwtUtils {
                 .signWith(key, algorithm)
                 .expiration(exp)
                 .claim("userId", userId)
+                .claim("role", role)
                 .compact();
     }
 
@@ -67,6 +69,24 @@ public class JwtUtils {
                     .parseSignedClaims(token);
             // 获取返回值
             result = claimsJws.getPayload().get("userId", Integer.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new CommonException(ErrorCode.TOKEN_ERROR);
+        }
+        return result;
+    }
+
+    public static String getUserRoleFromToken(String token) {
+        SecretKey key = Keys.hmacShaKeyFor(JwtConstant.KEY.getBytes(StandardCharsets.UTF_8));
+        String result;
+        try {
+            // 解析token
+            Jws<Claims> claimsJws = Jwts.parser()
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(token);
+            // 获取返回值
+            result = claimsJws.getPayload().get("role", String.class);
         } catch (Exception e) {
             e.printStackTrace();
             throw new CommonException(ErrorCode.TOKEN_ERROR);

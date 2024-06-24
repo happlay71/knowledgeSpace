@@ -91,6 +91,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     @Override
     public User getLoginUser(HttpServletRequest request) {
+        String role = JwtUtils.getUserRoleFromToken(request.getHeader("token"));
+        if (role.equals(UserRoleConstant.GUEST)) {
+            User user = new User();
+            BeanUtil.copyProperties(createGuestUserVo(), user);
+            return user;
+        }
         return this.getById(JwtUtils.getUserIdFromToken(request.getHeader("token")));
     }
 
@@ -99,12 +105,27 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         System.out.println(user);
         LoginUserVo loginUserVo = new LoginUserVo();
         BeanUtil.copyProperties(user, loginUserVo);
-        loginUserVo.setToken(JwtUtils.createUserToken(user.getId()));
+        loginUserVo.setToken(JwtUtils.createUserToken(user.getId(), user.getRole()));
         return loginUserVo;
+    }
+
+    private LoginUserVo createGuestUserVo() {
+        LoginUserVo guestUserVo = new LoginUserVo();
+        guestUserVo.setId(null);  // 访客没有ID
+        guestUserVo.setUsername("Guest");
+        guestUserVo.setRole(UserRoleConstant.GUEST);  // 访客角色设为 GUEST
+        guestUserVo.setToken(JwtUtils.createUserToken(guestUserVo.getId(), guestUserVo.getRole()));  // 访客token
+        return guestUserVo;
     }
 
     @Override
     public LoginUserVo login(LoginUserRequest request) {
+        String guest = UserRoleConstant.GUEST;
+        if (Objects.equals(request.getUsername(), guest) && Objects.equals(request.getPassword(), "654321")) {
+            // 如果没有提供用户名或密码，则生成访客信息
+            return createGuestUserVo();
+        }
+
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(User::getUsername, request.getUsername())
                 .eq(User::getPassword, request.getPassword());
@@ -177,6 +198,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         return avatarUploadVo;
     }
 
+    @Override
     public AvatarUploadVo uploadAvatar(MultipartFile file, Integer userId) {
         // 查询当前用户是否已有头像记录
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
@@ -235,41 +257,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         File jarF = h.getSource();
         return Paths.get(jarF.getParentFile().getParent(), "ksStatic").toString();
     }
-
-//    @Override
-//    public AvatarUploadVo uploadAvatar(MultipartFile file, Integer userId) {
-//        // 查询当前用户是否已有头像记录
-//        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
-//        queryWrapper.eq(User::getId, userId);
-//        User old_avatar = this.getOne(queryWrapper);
-//        if (old_avatar.getAvatarUrl() != null) {
-//            // 删除路径中保存的头像图片及用户 ID 文件夹
-//            //获取jar包所在目录
-//            ApplicationHome h = new ApplicationHome(getClass());
-//            File jarF = h.getSource();
-//            Path userDir = Paths.get(jarF.getParentFile().toString(), "static", old_avatar.getAvatarUrl()).getParent();
-//            System.out.println(userDir);
-//            if (Files.exists(userDir)) {
-//                try {
-//                    Files.walk(userDir)
-//                            .sorted(Comparator.reverseOrder())
-//                            .map(Path::toFile)
-//                            .forEach(File::delete);
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                    throw new CommonException(ErrorCode.SYSTEM_ERROR, "删除旧头像文件夹失败");
-//                }
-//            }
-//
-//        }
-//        // 更新数据库中当前头像路径信息
-//        String avatarUrl = fileUtils.saveFile(file, FileTypeEnum.AVATAR, userId);
-//        old_avatar.setAvatarUrl(avatarUrl);
-//        old_avatar.setUpdateUser(userId);
-//        this.updateById(old_avatar);
-//        return createUploadVo(old_avatar);
-//
-//    }
 
     @Override
     public LoginUserVo adminRegisterUser(AdminRegisterUserRequest request, User loginUser) {
@@ -462,18 +449,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         userDetailsVo.setRole(user.getRole());
 
         FolderDetailsVo folderDetailsVo = iFolderService.getFolderStructureByUserId(userId);
-        addFilesToFolders(folderDetailsVo, isLoggedIn);
+        iFileService.addFilesToFolders(folderDetailsVo, isLoggedIn);
 
         userDetailsVo.setFolders(folderDetailsVo);
 
         return userDetailsVo;
     }
 
-    private void addFilesToFolders(FolderDetailsVo folderDetailsVo, boolean isLoggedIn) {
-        List<FileDetailsVo> files = iFileService.getFilesByFolderId(folderDetailsVo.getId(), isLoggedIn);
-        folderDetailsVo.setFiles(files);
-        for (FolderDetailsVo subFolder : folderDetailsVo.getSubFolders()) {
-            addFilesToFolders(subFolder, isLoggedIn);
-        }
-    }
 }

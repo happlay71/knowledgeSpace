@@ -45,7 +45,7 @@ public class User implements Serializable {
     @TableField("email")
     private String email;
 
-    @ApiModelProperty(value = "用户角色（超级管理员0，管理员1，普通用户2）")
+    @ApiModelProperty(value = "用户角色（超级管理员ROOT，管理员USER_ADMIN，普通用户USER，访客GUEST）")
     @TableField("role")
     private String role;
 
