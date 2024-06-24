@@ -81,7 +81,8 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements IF
     public String uploadFile(UploadFileRequest uploadFileRequest, User user) {
         // 检查文件夹是否存在并属于当前用户
         if ((Objects.equals(user.getRole(), UserRoleConstant.USER)
-                || Objects.equals(user.getRole(), UserRoleConstant.USER_ADMIN))
+                || Objects.equals(user.getRole(), UserRoleConstant.USER_ADMIN)
+                || Objects.equals(user.getRole(), UserRoleConstant.ROOT))
                 && folderMapper.countFolderBelongsToUser(uploadFileRequest.getFolderId(), user.getId()) == 0) {
             throw new CommonException(ErrorCode.OPERATION_ERROR, "操作无效, 文件夹不属于当前用户");
         }
@@ -111,7 +112,7 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements IF
         }
 
         LambdaQueryWrapper<File> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(File::getName, name);
+        queryWrapper.eq(File::getName, name).eq(File::getUserId, user.getId());
         if (this.getOne(queryWrapper) != null) {
             throw new CommonException(ErrorCode.PARAMS_ERROR, "文件名不能重复");
         }
@@ -195,7 +196,7 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements IF
         if ((Objects.equals(user.getRole(), UserRoleConstant.USER)
                 ||  Objects.equals(user.getRole(), UserRoleConstant.USER_ADMIN))
                 && !Objects.equals(file.getUserId(), user.getId())) {
-            throw new CommonException(ErrorCode.NOT_AUTH_ERROR, "无权限修改该文件");
+            throw new CommonException(ErrorCode.NOT_AUTH_ERROR, "无权限删除该文件");
         }
 
         imageUtils.deleteImage(id);

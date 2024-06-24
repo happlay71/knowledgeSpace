@@ -158,7 +158,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
         // 创建根目录
         CreateFolderRequest createFolderRequest = new CreateFolderRequest(0, username);
-        iFolderService.createFolder(createFolderRequest, user);
+        iFolderService.createFolder(createFolderRequest, user, false);
 
         return createLoginUserVo(user);
     }
@@ -300,6 +300,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         user.setCreateUser(loginUser.getId());
         user.setUpdateUser(loginUser.getId());
         this.save(user);
+        // 创建根目录
+        CreateFolderRequest createFolderRequest = new CreateFolderRequest(0, user.getUsername());
+        iFolderService.createFolder(createFolderRequest, user, false);
         return createLoginUserVo(user);
     }
 
@@ -339,7 +342,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         LambdaQueryWrapper<Folder> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Folder::getUserId, user.getId()).eq(Folder::getParentId, 0);
         Folder folder = iFolderService.getOne(queryWrapper);
-        iFolderService.deleteById(folder.getId(), user);
+        iFolderService.deleteById(folder.getId(), user, false);
         // 3.用户数据删除
         boolean isRemoved = userMapper.deleteById(user.getId());
         if (!isRemoved) {
@@ -462,6 +465,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         userDetailsVo.setId(user.getId());
         userDetailsVo.setUsername(user.getUsername());
         userDetailsVo.setRole(user.getRole());
+        userDetailsVo.setAvatarUrl(user.getAvatarUrl());
 
         FolderDetailsVo folderDetailsVo = iFolderService.getFolderStructureByUserId(userId);
         iFileService.addFilesToFolders(folderDetailsVo, isLoggedIn);

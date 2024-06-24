@@ -62,11 +62,13 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder> impleme
     }
 
     @Override
-    public String createFolder(CreateFolderRequest createFolderRequest, User user) {
+    public String createFolder(CreateFolderRequest createFolderRequest, User user, Boolean flag) {
         // 检查文件夹是否存在并属于当前用户
         if ((Objects.equals(user.getRole(), UserRoleConstant.USER)
-                ||  Objects.equals(user.getRole(), UserRoleConstant.USER_ADMIN))
-                && !folderBelongsToUser(createFolderRequest.getParentId(), user.getId())) {
+                || Objects.equals(user.getRole(), UserRoleConstant.USER_ADMIN)
+                || Objects.equals(user.getRole(), UserRoleConstant.ROOT))
+                && !folderBelongsToUser(createFolderRequest.getParentId(), user.getId())
+                && flag) {
             throw new CommonException(ErrorCode.OPERATION_ERROR, "操作无效，无权创建");
         }
 
@@ -108,7 +110,7 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder> impleme
         this.updateById(folder); // 更新文件夹信息
 
         // 物理上创建文件夹
-        String folderFromPath = folderUtils.createFolderFromPath(FileTypeEnum.DOCUMENT, folder.getId());
+        String folderFromPath = folderUtils.createFolderFromPath(FileTypeEnum.DOCUMENT, user.getId());
         return "文件夹创建成功，ID: " + folder.getId() + "path: " + folderFromPath;
     }
 
@@ -151,15 +153,19 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder> impleme
     }
 
     @Override
-    public Boolean deleteById(Integer id, User user) {
+    public Boolean deleteById(Integer id, User user, Boolean flag) {
         // 使用 LambdaQueryWrapper 根据 ID 查询文件夹
         LambdaQueryWrapper<Folder> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Folder::getId, id);
         Folder folder = this.getOne(queryWrapper);
 
+        if (folder.getParentId() == 0 && flag) {
+            throw new CommonException(ErrorCode.OPERATION_ERROR, "禁止删除根目录");
+        }
+
         if ((Objects.equals(user.getRole(), UserRoleConstant.USER)
                 ||  Objects.equals(user.getRole(), UserRoleConstant.USER_ADMIN))
-                && folder == null || !folder.getUserId().equals(user.getId())) {
+                && !folder.getUserId().equals(user.getId())) {
             throw new CommonException(ErrorCode.NOT_AUTH_ERROR, "其他用户禁止删除");
         }
 

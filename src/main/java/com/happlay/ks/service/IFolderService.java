@@ -22,11 +22,11 @@ public interface IFolderService extends IService<Folder> {
 
     Boolean folderBelongsToUser(Integer folderId, Integer userId);
 
-    String createFolder(CreateFolderRequest createFolderRequest, User user);
+    String createFolder(CreateFolderRequest createFolderRequest, User user, Boolean flag);
 
     String updataName(UpdateNameRequest updateNameRequest, User user);
 
-    Boolean deleteById(Integer id, User user);
+    Boolean deleteById(Integer id, User user, Boolean flag);
 
     List<FolderVo> selectByUserId(Integer id);
 
