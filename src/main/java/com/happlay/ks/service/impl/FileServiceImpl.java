@@ -193,6 +193,10 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements IF
         queryWrapper.eq(File::getId, id);
         File file = this.getOne(queryWrapper);
 
+        if (file == null) {
+            throw new CommonException(ErrorCode.PARAMS_ERROR, "文件不存在");
+        }
+
         if ((Objects.equals(user.getRole(), UserRoleConstant.USER)
                 ||  Objects.equals(user.getRole(), UserRoleConstant.USER_ADMIN))
                 && !Objects.equals(file.getUserId(), user.getId())) {

@@ -110,7 +110,7 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder> impleme
         this.updateById(folder); // 更新文件夹信息
 
         // 物理上创建文件夹
-        String folderFromPath = folderUtils.createFolderFromPath(FileTypeEnum.DOCUMENT, user.getId());
+        String folderFromPath = folderUtils.createFolderFromPath(FileTypeEnum.DOCUMENT, folder.getId());
         return "文件夹创建成功，ID: " + folder.getId() + "path: " + folderFromPath;
     }
 
@@ -159,13 +159,18 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder> impleme
         queryWrapper.eq(Folder::getId, id);
         Folder folder = this.getOne(queryWrapper);
 
+        if (folder == null) {
+            throw new CommonException(ErrorCode.PARAMS_ERROR, "文件夹不存在");
+        }
+
         if (folder.getParentId() == 0 && flag) {
             throw new CommonException(ErrorCode.OPERATION_ERROR, "禁止删除根目录");
         }
 
         if ((Objects.equals(user.getRole(), UserRoleConstant.USER)
                 ||  Objects.equals(user.getRole(), UserRoleConstant.USER_ADMIN))
-                && !folder.getUserId().equals(user.getId())) {
+                && !folder.getUserId().equals(user.getId())
+                && flag) {
             throw new CommonException(ErrorCode.NOT_AUTH_ERROR, "其他用户禁止删除");
         }
 
