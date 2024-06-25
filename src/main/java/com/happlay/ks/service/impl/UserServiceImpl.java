@@ -399,7 +399,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
         if (Objects.equals(userUpdateRequest.getRole(), UserRoleConstant.ROOT)) {
             throw new CommonException(ErrorCode.PARAMS_ERROR, "不允许添加新的超级管理员");
-        } else if (userUpdateRequest.getRole() != null) {
+        } else if (userUpdateRequest.getRole() != null && !userUpdateRequest.getRole().trim().isEmpty()) {
             oldUser.setRole(userUpdateRequest.getRole());
         }
 
