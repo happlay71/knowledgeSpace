@@ -56,7 +56,7 @@ public interface IUserService extends IService<User> {
 
     Page<UserVo> selectPage(PageRequest pageRequest);
 
-    Page<UserVo> selectName(String name, PageRequest pageRequest);
+    Page<UserVo> selectUserName(String name, PageRequest pageRequest);
 
     UserDetailsVo getUserDetailsById(Integer userId, boolean isLoggedIn);
 

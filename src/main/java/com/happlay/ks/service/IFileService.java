@@ -1,5 +1,7 @@
 package com.happlay.ks.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.happlay.ks.common.PageRequest;
 import com.happlay.ks.model.dto.file.CreateFileRequest;
 import com.happlay.ks.model.dto.file.UpdateFileRequest;
 import com.happlay.ks.model.dto.file.UpdateNameRequest;
@@ -9,7 +11,9 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.happlay.ks.model.entity.Folder;
 import com.happlay.ks.model.entity.User;
 import com.happlay.ks.model.vo.file.FileDetailsVo;
+import com.happlay.ks.model.vo.file.FileVo;
 import com.happlay.ks.model.vo.folder.FolderDetailsVo;
+import com.happlay.ks.model.vo.user.UserVo;
 
 import java.util.List;
 import java.util.Map;
@@ -35,6 +39,8 @@ public interface IFileService extends IService<File> {
     String updateFileName(UpdateNameRequest updateNameRequest, User user);
 
     String updateFile(UpdateFileRequest updateFileRequest, User user);
+
+    Page<FileVo> selectFileName(String name, PageRequest pageRequest);
 
     Map<String, String> readFileContent(Integer fileId, User user);
 

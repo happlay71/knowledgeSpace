@@ -102,13 +102,4 @@ public class FolderController {
         iFileService.addFilesToFolders(folderDetailsVo, true);
         return ResultUtils.success(folderDetailsVo);
     }
-
-
-//    private void addFilesToFolders(FolderDetailsVo folderDetailsVo, boolean isLoggedIn) {
-//        List<FileDetailsVo> files = iFileService.getFilesByFolderId(folderDetailsVo.getId(), isLoggedIn);
-//        folderDetailsVo.setFiles(files);
-//        for (FolderDetailsVo subFolder : folderDetailsVo.getSubFolders()) {
-//            addFilesToFolders(subFolder, isLoggedIn);
-//        }
-//    }
 }

@@ -434,7 +434,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     }
 
     @Override
-    public Page<UserVo> selectName(String name, PageRequest pageRequest) {
+    public Page<UserVo> selectUserName(String name, PageRequest pageRequest) {
         // 模糊查询匹配对象
         Page<User> userPage = new Page<>(pageRequest.getCurrent(), pageRequest.getPageSize());
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();

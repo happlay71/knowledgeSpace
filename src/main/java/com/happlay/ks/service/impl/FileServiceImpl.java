@@ -1,11 +1,16 @@
 package com.happlay.ks.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.happlay.ks.common.ErrorCode;
+import com.happlay.ks.common.PageRequest;
 import com.happlay.ks.constant.UserRoleConstant;
 import com.happlay.ks.emums.FileTypeEnum;
 import com.happlay.ks.exception.CommonException;
 import com.happlay.ks.mapper.FolderMapper;
+import com.happlay.ks.mapper.UserMapper;
 import com.happlay.ks.model.dto.file.CreateFileRequest;
 import com.happlay.ks.model.dto.file.UpdateFileRequest;
 import com.happlay.ks.model.dto.file.UpdateNameRequest;
@@ -15,7 +20,10 @@ import com.happlay.ks.mapper.FileMapper;
 import com.happlay.ks.model.entity.Folder;
 import com.happlay.ks.model.entity.User;
 import com.happlay.ks.model.vo.file.FileDetailsVo;
+import com.happlay.ks.model.vo.file.FileVo;
 import com.happlay.ks.model.vo.folder.FolderDetailsVo;
+import com.happlay.ks.model.vo.user.UserFileVo;
+import com.happlay.ks.model.vo.user.UserVo;
 import com.happlay.ks.service.IFileService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.happlay.ks.service.IFolderService;
@@ -46,6 +54,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -70,6 +79,9 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements IF
 
     @Resource
     ImageUtils imageUtils;
+
+    @Resource
+    UserMapper userMapper;
 
     @Resource
     FolderMapper folderMapper;
@@ -296,6 +308,45 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements IF
         this.updateById(file);
 
         return "文件更新成功，路径：" + path;
+    }
+
+    @Override
+    public Page<FileVo> selectFileName(String name, PageRequest pageRequest) {
+        // 创建分页对象
+        Page<File> filePage = new Page<>(pageRequest.getCurrent(), pageRequest.getPageSize());
+
+        // 创建查询条件
+        LambdaQueryWrapper<File> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.like(StringUtils.isNotEmpty(name), File::getName, name);
+        queryWrapper.orderByDesc(File::getUpdateTime);
+
+        // 执行分页查询
+        this.page(filePage, queryWrapper);
+
+        // 创建一个新的 Page 对象用于 FileVo
+        Page<FileVo> fileVoPage = new Page<>(filePage.getCurrent(), filePage.getSize(), filePage.getTotal());
+
+        // 将 FilePage 的属性复制到 FileVoPage，但忽略 records 字段
+        BeanUtil.copyProperties(filePage, fileVoPage, "records");
+
+        // 将 File 的记录转换为 FileVo 的记录
+        List<File> records = filePage.getRecords();
+        List<FileVo> list = records.stream().map(file -> {
+            FileVo fileVo = new FileVo();
+            BeanUtil.copyProperties(file, fileVo);
+
+            // 获取用户信息并设置到 FileVo 中
+            User user = userMapper.getById(file.getUserId());
+            UserFileVo userFileVo = new UserFileVo();
+            BeanUtil.copyProperties(user, userFileVo);
+            fileVo.setUserFileVo(userFileVo);
+
+            return fileVo;
+        }).collect(Collectors.toList());
+
+        // 设置 FileVoPage 的记录
+        fileVoPage.setRecords(list);
+        return fileVoPage;
     }
 
     @Override

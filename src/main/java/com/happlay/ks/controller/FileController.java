@@ -1,8 +1,10 @@
 package com.happlay.ks.controller;
 
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.happlay.ks.annotation.LoginCheck;
 import com.happlay.ks.common.BaseResponse;
+import com.happlay.ks.common.PageRequest;
 import com.happlay.ks.common.ResultUtils;
 import com.happlay.ks.constant.UserRoleConstant;
 import com.happlay.ks.model.dto.file.CreateFileRequest;
@@ -10,6 +12,8 @@ import com.happlay.ks.model.dto.file.UpdateFileRequest;
 import com.happlay.ks.model.dto.file.UpdateNameRequest;
 import com.happlay.ks.model.dto.file.UploadFileRequest;
 import com.happlay.ks.model.entity.User;
+import com.happlay.ks.model.vo.file.FileVo;
+import com.happlay.ks.model.vo.user.UserVo;
 import com.happlay.ks.service.IFileService;
 import com.happlay.ks.service.IUserService;
 import io.swagger.annotations.ApiOperation;
@@ -81,6 +85,19 @@ public class FileController {
     public BaseResponse<Boolean> deleteFile(@RequestParam("id") Integer id, HttpServletRequest request) {
         User loginUser = iUserService.getLoginUser(request);
         return ResultUtils.success(iFileService.deleteFile(id, loginUser));
+    }
+
+    //    全局模糊搜索文件名
+    @GetMapping("/search/file")
+    @ApiOperation(value = "查找文件", notes = "传入字符串，页码和页面大小")
+    public BaseResponse<Page<FileVo>> searchFiles(
+            @RequestParam(required = false) String filename,
+            PageRequest pageRequest,
+            HttpServletRequest request
+    ) {
+        iUserService.getLoginUser(request);
+        Page<FileVo> userVoPage = iFileService.selectFileName(filename, pageRequest);
+        return ResultUtils.success(userVoPage);
     }
 
     @GetMapping("/selectContent")

@@ -50,7 +50,7 @@ public class UserController {
 
     @PostMapping("/sendVerificationEmailForSetEmail")
     @LoginCheck(mustRole = {ROOT, USER_ADMIN, USER})
-    @ApiOperation(value = "发送邮件（设置邮箱）", notes = "传入邮箱账号")
+    @ApiOperation(value = "发送邮件（设置邮箱）", notes = "需要用户登录，传入邮箱账号")
     public BaseResponse<String> sendVerificationEmailForSetEmail(@RequestParam("email") String email, HttpServletRequest request) {
         iUserService.getLoginUser(request);
         verificationService.sendVerificationEmail(email);
@@ -59,7 +59,7 @@ public class UserController {
 
     @PostMapping("/sendVerificationEmailForResetPassword")
     @LoginCheck(mustRole = {ROOT, USER_ADMIN, USER})
-    @ApiOperation(value = "发送邮件（重置密码）", notes = "传入邮箱账号")
+    @ApiOperation(value = "发送邮件（重置密码）", notes = "需要用户登录，传入邮箱账号")
     public BaseResponse<String> sendVerificationEmailForResetPassword(@RequestParam("email") String email) {
         verificationService.sendVerificationEmail(email);
         return ResultUtils.success("验证码发送成功");
@@ -67,7 +67,7 @@ public class UserController {
 
     @PostMapping("/verifyCode")
     @LoginCheck(mustRole = {ROOT, USER_ADMIN, USER})
-    @ApiOperation(value = "验证邮箱信息", notes = "传入对应的邮箱(前端传入)和验证码, 生成Token")
+    @ApiOperation(value = "验证邮箱信息", notes = "需要用户登录，传入对应的邮箱(前端传入)和验证码, 生成Token")
     public BaseResponse<String> verifyCode(VerifyCodeRequest verifyCodeRequest) {
 
         boolean isVerified = verificationService.verifyCode(verifyCodeRequest.getEmail(), verifyCodeRequest.getCode());
@@ -82,7 +82,7 @@ public class UserController {
 
     @PostMapping("/setEmail")
     @LoginCheck(mustRole = {ROOT, USER_ADMIN, USER})
-    @ApiOperation(value = "设置邮箱", notes = "传入邮箱, emailToken 通过请求头传递")
+    @ApiOperation(value = "设置邮箱", notes = "需要用户登录，传入邮箱, emailToken 通过请求头传递")
     public BaseResponse<LoginUserVo> setEmail(@RequestParam("email") String email,
                                               @RequestHeader("emailToken") String emailToken,
                                               HttpServletRequest request) {
@@ -101,6 +101,13 @@ public class UserController {
         return ResultUtils.success(iUserService.login(request));
     }
 
+    @PostMapping("/logout")
+    @ApiOperation(value = "需要用户登录，退出登录")
+    public BaseResponse<String> logout(HttpServletRequest request) {
+        iUserService.getLoginUser(request);
+        return ResultUtils.success("退出登录成功");
+    }
+
     /**
      * @Valid 用于验证加上了@NotBlank和@Email的属性
      * @param request
@@ -115,7 +122,7 @@ public class UserController {
 
     @PostMapping("/setAvatar")
     @LoginCheck(mustRole = {ROOT, USER_ADMIN, USER})
-    @ApiOperation(value = "上传头像", notes = "上传图片大小不大于10MB")
+    @ApiOperation(value = "上传头像", notes = "需要用户登录，上传图片大小不大于10MB")
     public BaseResponse<AvatarUploadVo> setAvatar(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
         User loginUser = iUserService.getLoginUser(request);
         if (file.isEmpty()) {
@@ -141,7 +148,7 @@ public class UserController {
 
     @PostMapping("/register/admin")
     @LoginCheck(mustRole = {UserRoleConstant.ROOT, UserRoleConstant.USER_ADMIN})
-    @ApiOperation(value = "超级管理员或管理员添加用户", notes = "传入用户名，密码，确认密码，角色role")
+    @ApiOperation(value = "超级管理员或管理员添加用户", notes = "需要管理员登录，传入用户名，密码，确认密码，角色role")
     public BaseResponse<LoginUserVo> addUserByAdmin(@RequestBody AdminRegisterUserRequest request, HttpServletRequest servletRequest) {
         User loginUser = iUserService.getLoginUser(servletRequest);
         return ResultUtils.success(iUserService.adminRegisterUser(request, loginUser));
@@ -157,7 +164,7 @@ public class UserController {
 
     @PostMapping("/delete/{id}")
     @LoginCheck(mustRole = {UserRoleConstant.ROOT, UserRoleConstant.USER_ADMIN})
-    @ApiOperation(value = "删除用户(管理员)", notes = "id通过url传递，只有管理员可操作")
+    @ApiOperation(value = "删除用户(管理员)", notes = "需要管理员登录，id通过url传递，只有管理员可操作")
     public BaseResponse<Boolean> delete(@PathVariable("id") Integer id, HttpServletRequest request) {
         User user = iUserService.getById(id);
         User loginUser = iUserService.getLoginUser(request);
@@ -166,7 +173,7 @@ public class UserController {
 
     @PostMapping("/resetPassword")
     @LoginCheck(mustRole = {ROOT, USER_ADMIN, USER})
-    @ApiOperation(value = "重置密码", notes = "验证完邮箱后，传入密码，二次密码")
+    @ApiOperation(value = "重置密码", notes = "需要用户登录，验证完邮箱后，传入密码，二次密码")
     public BaseResponse<Boolean> resetPassword(@RequestHeader("emailToken") String emailToken,
                                                ResetUserPasswordRequest resetRequest) {
         String email = JwtUtils.getEmailFromToken(emailToken);
@@ -175,7 +182,7 @@ public class UserController {
 
     @PostMapping("/update/me")
     @LoginCheck(mustRole = {ROOT, USER_ADMIN, USER})
-    @ApiOperation(value = "用户修改姓名密码", notes = "传入新用户名，密码，确认密码，需要用户登录")
+    @ApiOperation(value = "用户修改姓名密码", notes = "需要用户登录，传入新用户名，密码，确认密码，需要用户登录")
     public BaseResponse<Boolean> updateMe(@RequestBody UpdateUserRequest updateUserRequest, HttpServletRequest request) {
         User loginUser = iUserService.getLoginUser(request);
         updateUserRequest.setId(loginUser.getId());
@@ -184,24 +191,23 @@ public class UserController {
 
     @PostMapping("/update")
     @LoginCheck(mustRole = {UserRoleConstant.ROOT, UserRoleConstant.USER_ADMIN})
-    @ApiOperation(value = "修改用户信息", notes = "id通过请求体传递,只有管理员可操作")
+    @ApiOperation(value = "超级管理员或管理员修改用户信息", notes = "需要管理员登录，id通过请求体传递,只有管理员可操作")
     public BaseResponse<Boolean> update(@RequestBody UpdateUserRequest updateUserRequest, HttpServletRequest request) {
         User loginUser = iUserService.getLoginUser(request);
         return ResultUtils.success(iUserService.update(updateUserRequest, loginUser));
     }
 
-    @GetMapping("/search")
+    @GetMapping("/search/user")
     @ApiOperation(value = "用户查询（模糊匹配）", notes = "传入字符串，页码和页面大小")
     public BaseResponse<Page<UserVo>> searchUsers(
             @RequestParam(required = false) String username,
             PageRequest pageRequest,
-            HttpServletRequest request) {
+            HttpServletRequest request
+    ) {
         iUserService.getLoginUser(request);
-        Page<UserVo> userVoPage = iUserService.selectName(username, pageRequest);
+        Page<UserVo> userVoPage = iUserService.selectUserName(username, pageRequest);
         return ResultUtils.success(userVoPage);
     }
-
-    //    全局模糊搜索文件名
 
     @GetMapping("/page")
     @ApiOperation(value = "分页查询", notes = "传入页码和页面大小")
