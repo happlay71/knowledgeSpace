@@ -111,6 +111,7 @@ public class FileController {
     }
 
     @GetMapping("/down/{id}")
+    @LoginCheck(mustRole = {ROOT, USER_ADMIN, USER})
     @ApiOperation(value = "下载文件", notes = "根据文件ID下载文件")
     public BaseResponse<Map<String, String>> downloadFile(@PathVariable("id") Integer id) throws IOException {
         FileDownloadVo fileDownloadVo = iFileService.downFileById(id);
