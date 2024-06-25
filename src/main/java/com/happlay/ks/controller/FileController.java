@@ -6,22 +6,25 @@ import com.happlay.ks.annotation.LoginCheck;
 import com.happlay.ks.common.BaseResponse;
 import com.happlay.ks.common.PageRequest;
 import com.happlay.ks.common.ResultUtils;
-import com.happlay.ks.constant.UserRoleConstant;
 import com.happlay.ks.model.dto.file.CreateFileRequest;
 import com.happlay.ks.model.dto.file.UpdateFileRequest;
 import com.happlay.ks.model.dto.file.UpdateNameRequest;
 import com.happlay.ks.model.dto.file.UploadFileRequest;
 import com.happlay.ks.model.entity.User;
+import com.happlay.ks.model.vo.file.FileDownloadVo;
 import com.happlay.ks.model.vo.file.FileVo;
-import com.happlay.ks.model.vo.user.UserVo;
 import com.happlay.ks.service.IFileService;
 import com.happlay.ks.service.IUserService;
 import io.swagger.annotations.ApiOperation;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.HashSet;
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 import static com.happlay.ks.constant.UserRoleConstant.*;
@@ -107,5 +110,26 @@ public class FileController {
         return ResultUtils.success(iFileService.readFileContent(fileId, loginUser));
     }
 
+    @GetMapping("/down/{id}")
+    @ApiOperation(value = "下载文件", notes = "根据文件ID下载文件")
+    public BaseResponse<Map<String, String>> downloadFile(@PathVariable("id") Integer id) throws IOException {
+        FileDownloadVo fileDownloadVo = iFileService.downFileById(id);
+        org.springframework.core.io.Resource resource = fileDownloadVo.getResource();
 
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileDownloadVo.getFileName() + "\"");
+
+        ResponseEntity.ok()
+                .headers(headers)
+                .contentLength(resource.contentLength())
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource);
+
+        // 将文件的实际路径返回给前端
+        Map<String, String> responseBody = new HashMap<>();
+        responseBody.put("filePath", resource.getURI().toString());
+        responseBody.put("fileName", fileDownloadVo.getFileName());
+
+        return ResultUtils.success(responseBody);
+    }
 }

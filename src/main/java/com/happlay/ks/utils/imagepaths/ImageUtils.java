@@ -3,13 +3,11 @@ package com.happlay.ks.utils.imagepaths;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.happlay.ks.common.ErrorCode;
-import com.happlay.ks.emums.FileTypeEnum;
 import com.happlay.ks.exception.CommonException;
 import com.happlay.ks.mapper.ImagepathsMapper;
 import com.happlay.ks.model.entity.Imagepaths;
 import com.happlay.ks.service.IImagepathsService;
 import com.happlay.ks.utils.file.FileUtils;
-import com.happlay.ks.utils.file.FolderUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;

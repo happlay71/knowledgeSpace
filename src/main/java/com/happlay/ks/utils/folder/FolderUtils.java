@@ -1,4 +1,4 @@
-package com.happlay.ks.utils.file;
+package com.happlay.ks.utils.folder;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.happlay.ks.common.ErrorCode;

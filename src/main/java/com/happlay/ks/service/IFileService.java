@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.happlay.ks.model.entity.Folder;
 import com.happlay.ks.model.entity.User;
 import com.happlay.ks.model.vo.file.FileDetailsVo;
+import com.happlay.ks.model.vo.file.FileDownloadVo;
 import com.happlay.ks.model.vo.file.FileVo;
 import com.happlay.ks.model.vo.folder.FolderDetailsVo;
 import com.happlay.ks.model.vo.user.UserVo;
@@ -49,4 +50,7 @@ public interface IFileService extends IService<File> {
     List<FileDetailsVo> getFilesByFolderId(Integer folderId, boolean isLoggedIn);
 
     void addFilesToFolders(FolderDetailsVo folderDetailsVo, boolean isLoggedIn);
+
+    FileDownloadVo downFileById(Integer id);
+
 }

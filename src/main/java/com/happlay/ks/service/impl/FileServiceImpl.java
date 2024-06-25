@@ -17,41 +17,31 @@ import com.happlay.ks.model.dto.file.UpdateNameRequest;
 import com.happlay.ks.model.dto.file.UploadFileRequest;
 import com.happlay.ks.model.entity.File;
 import com.happlay.ks.mapper.FileMapper;
-import com.happlay.ks.model.entity.Folder;
 import com.happlay.ks.model.entity.User;
 import com.happlay.ks.model.vo.file.FileDetailsVo;
+import com.happlay.ks.model.vo.file.FileDownloadVo;
 import com.happlay.ks.model.vo.file.FileVo;
 import com.happlay.ks.model.vo.folder.FolderDetailsVo;
 import com.happlay.ks.model.vo.user.UserFileVo;
-import com.happlay.ks.model.vo.user.UserVo;
 import com.happlay.ks.service.IFileService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.happlay.ks.service.IFolderService;
-import com.happlay.ks.service.IImagepathsService;
 import com.happlay.ks.utils.file.FileImageUtils;
 import com.happlay.ks.utils.file.FileUtils;
-import com.happlay.ks.utils.file.FolderUtils;
+import com.happlay.ks.utils.folder.FolderUtils;
 import com.happlay.ks.utils.imagepaths.ImageUtils;
-import io.swagger.models.auth.In;
-import org.apache.poi.hwpf.HWPFDocument;
-import org.apache.poi.hwpf.converter.WordToHtmlConverter;
+import org.springframework.core.io.UrlResource;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import org.w3c.dom.Document;
 
 import javax.annotation.Resource;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -407,6 +397,39 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements IF
         }
         return fileDetailsVos;
     }
+
+    @Override
+    public FileDownloadVo downFileById(Integer id) {
+        LambdaQueryWrapper<File> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(File::getId, id);
+        File file = this.getOne(queryWrapper);
+
+        if (file == null) {
+            throw new CommonException(ErrorCode.PARAMS_ERROR, "文件不存在");
+        }
+
+        String fileName = getFileNameFromPath(file.getPath());
+        String path = fileUtils.getFolderPath(FileTypeEnum.DOCUMENT, file.getFolderId()) + fileName;
+        System.out.println(path);
+
+        try {
+            java.io.File realFile = new java.io.File(path);
+
+            if (!realFile.exists()) {
+                throw new CommonException(ErrorCode.PARAMS_ERROR, "文件不存在");
+            }
+
+            Path realPath = Paths.get(path);
+            org.springframework.core.io.Resource resource = new UrlResource(realPath.toUri());
+
+            return new FileDownloadVo(resource, file.getName());
+
+        } catch (MalformedURLException e) {
+            throw new CommonException(ErrorCode.OPERATION_ERROR, "读取文件错误");
+        }
+    }
+
+
 
     public void addFilesToFolders(FolderDetailsVo folderDetailsVo, boolean isLoggedIn) {
         List<FileDetailsVo> files = this.getFilesByFolderId(folderDetailsVo.getId(), isLoggedIn);
