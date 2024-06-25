@@ -65,8 +65,7 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder> impleme
     public String createFolder(CreateFolderRequest createFolderRequest, User user, Boolean flag) {
         // 检查文件夹是否存在并属于当前用户
         if ((Objects.equals(user.getRole(), UserRoleConstant.USER)
-                || Objects.equals(user.getRole(), UserRoleConstant.USER_ADMIN)
-                || Objects.equals(user.getRole(), UserRoleConstant.ROOT))
+                || Objects.equals(user.getRole(), UserRoleConstant.USER_ADMIN))
                 && !folderBelongsToUser(createFolderRequest.getParentId(), user.getId())
                 && flag) {
             throw new CommonException(ErrorCode.OPERATION_ERROR, "操作无效，无权创建");
@@ -83,7 +82,6 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder> impleme
         }
 
         folder.setName(createFolderRequest.getName());
-        folder.setUserId(user.getId());
         folder.setCreateUser(user.getId());
         folder.setUpdateUser(user.getId());
 
@@ -97,6 +95,12 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder> impleme
             if (this.getOne(queryWrapper) != null) {
                 throw new CommonException(ErrorCode.PARAMS_ERROR, "存在对应父文件");
             }
+            /*
+             这将会设置为登录用户的id，如果登录用户非本用户
+             将造成本用户文件夹及文件存储在他人数据中，
+             本用户无法增加，修改和删除在该文件夹下新的文件夹和文件
+             */
+            folder.setUserId(user.getId());
             folder.setParentId(0);
         } else {
             LambdaQueryWrapper<Folder> queryWrapper = new LambdaQueryWrapper<>();
@@ -104,6 +108,7 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder> impleme
             if (this.getOne(queryWrapper) == null) {
                 throw new CommonException(ErrorCode.PARAMS_ERROR, "不存在对应父文件");
             }
+            folder.setUserId(this.getOne(queryWrapper).getId());
             folder.setParentId(createFolderRequest.getParentId());
         }
 
