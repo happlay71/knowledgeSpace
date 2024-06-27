@@ -3,7 +3,9 @@ package com.happlay.ks.emums;
 public enum FileTypeEnum {
     AVATAR("avatar"),  // 头像文件
     PHOTO("document/photo"),  // 图片文件
-    DOCUMENT("document");  // 文档文件
+    DOCUMENT("document"),  // 文档文件
+    BOOKMARK("document/bookMark"); // 书签
+
     private final String type;
 
     FileTypeEnum(String type) {
@@ -27,6 +29,9 @@ public enum FileTypeEnum {
             case "doc":
             case "docx":
                 return DOCUMENT;  // 文档文件类型
+            case "html":
+            case "htm":
+                return BOOKMARK;  // 书签文件类型
             default:
                 throw new IllegalArgumentException("Unsupported file type: " + extension);
         }

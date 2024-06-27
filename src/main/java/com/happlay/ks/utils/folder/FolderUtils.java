@@ -114,7 +114,7 @@ public class FolderUtils {
     }
 
     // 获取文件夹的路径
-    private String getFolderPath(FileTypeEnum fileTypeEnum, int id) {
+    public String getFolderPath(FileTypeEnum fileTypeEnum, int id) {
         String basePath = new File(storageRootPath).getAbsolutePath();
         switch (fileTypeEnum) {
             case AVATAR:
@@ -123,6 +123,8 @@ public class FolderUtils {
                 return Paths.get(basePath, "document", "photo", String.valueOf(id)).normalize().toString();
             case DOCUMENT:
                 return Paths.get(basePath, "document", String.valueOf(id)).normalize().toString();
+            case BOOKMARK:
+                return Paths.get(basePath, "document", "bookMark", String.valueOf(id)).normalize().toString();
             default:
                 throw new CommonException(ErrorCode.PARAMS_ERROR, "不支持的文件类型");
         }
