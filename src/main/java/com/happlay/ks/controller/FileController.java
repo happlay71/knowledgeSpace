@@ -15,6 +15,7 @@ import com.happlay.ks.model.vo.file.FileDownloadVo;
 import com.happlay.ks.model.vo.file.FileVo;
 import com.happlay.ks.service.IFileService;
 import com.happlay.ks.service.IUserService;
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -39,6 +40,7 @@ import static com.happlay.ks.constant.UserRoleConstant.*;
  */
 @RestController
 @RequestMapping("/file")
+@Api(value = "文件")
 public class FileController {
 
     @Resource

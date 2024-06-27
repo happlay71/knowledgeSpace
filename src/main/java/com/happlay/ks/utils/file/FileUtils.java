@@ -122,8 +122,6 @@ public class FileUtils {
                 return Paths.get(basePath, "document", "photo", String.valueOf(id)).normalize().toString();
             case DOCUMENT:
                 return Paths.get(basePath, "document", String.valueOf(id)).normalize().toString();
-            case BOOKMARK:
-                return Paths.get(basePath, "document", "bookMark", String.valueOf(id)).normalize().toString();
             default:
                 throw new CommonException(ErrorCode.PARAMS_ERROR, "不支持的文件类型");
         }

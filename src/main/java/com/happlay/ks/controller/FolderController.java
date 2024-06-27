@@ -13,6 +13,7 @@ import com.happlay.ks.model.vo.folder.FolderVo;
 import com.happlay.ks.service.IFileService;
 import com.happlay.ks.service.IFolderService;
 import com.happlay.ks.service.IUserService;
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.web.bind.annotation.*;
@@ -33,6 +34,7 @@ import static com.happlay.ks.constant.UserRoleConstant.*;
  */
 @RestController
 @RequestMapping("/folder")
+@Api(value = "文件夹")
 public class FolderController {
 
     @Resource
@@ -102,4 +104,6 @@ public class FolderController {
         iFileService.addFilesToFolders(folderDetailsVo, true);
         return ResultUtils.success(folderDetailsVo);
     }
+
+    // 获取该目录下的所有书签
 }
